@@ -52,6 +52,7 @@ export async function saveRule(data: z.infer<typeof FormRuleSchema>) {
     const ruleData: Omit<Rule, 'id'> = {
       name: validatedData.name,
       description: validatedData.description,
+      businessCategory: validatedData.businessCategory,
       status: validatedData.status,
       conditions: validatedData.conditions.map(c => ({...c, value: parseValue(c.value)})),
       actions: validatedData.actions.map(a => ({

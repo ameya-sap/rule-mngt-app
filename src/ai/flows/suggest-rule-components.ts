@@ -15,6 +15,7 @@ const SuggestRuleComponentsInputSchema = z.object({
   existingRules: z.array(
     z.object({
       name: z.string(),
+      businessCategory: z.string(),
       description: z.string(),
       conditions: z.array(z.object({
         field: z.string(),
@@ -63,6 +64,7 @@ const prompt = ai.definePrompt({
   Existing Rules:
   {{#each existingRules}}
   Rule Name: {{this.name}}
+  Business Category: {{this.businessCategory}}
   Description: {{this.description}}
   Conditions:
   {{#each this.conditions}}

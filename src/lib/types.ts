@@ -16,6 +16,7 @@ export const ActionSchema = z.object({
 export const RuleSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Rule name is required.'),
+  businessCategory: z.string().min(1, 'Business category is required.'),
   description: z.string().min(1, 'Description is required.'),
   conditions: z.array(ConditionSchema).min(1, 'At least one condition is required.'),
   actions: z.array(ActionSchema).min(1, 'At least one action is required.'),

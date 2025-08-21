@@ -93,6 +93,7 @@ export function RuleList({ initialRules }: RuleListProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead className="hidden md:table-cell">Category</TableHead>
               <TableHead className="hidden md:table-cell">Description</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Active</TableHead>
@@ -103,6 +104,7 @@ export function RuleList({ initialRules }: RuleListProps) {
             {rules.map((rule) => (
               <TableRow key={rule.id}>
                 <TableCell className="font-medium">{rule.name}</TableCell>
+                <TableCell className="hidden md:table-cell">{rule.businessCategory}</TableCell>
                 <TableCell className="hidden md:table-cell max-w-sm truncate">
                   {rule.description}
                 </TableCell>

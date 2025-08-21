@@ -44,6 +44,7 @@ export function RuleForm({ rule }: RuleFormProps) {
     defaultValues: transformRuleDataToFormData(rule) || {
       name: '',
       description: '',
+      businessCategory: '',
       conditions: [{ field: '', operator: '==', value: '' }],
       actions: [{ type: '', function: '', description: '', parameters: '{}' }],
       status: 'inactive',
@@ -109,6 +110,19 @@ export function RuleForm({ rule }: RuleFormProps) {
                   <FormLabel>Rule Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Gold Customer Discount" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="businessCategory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Category</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Sales & Finance" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
