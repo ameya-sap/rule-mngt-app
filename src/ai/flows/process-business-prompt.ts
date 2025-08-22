@@ -112,7 +112,7 @@ async function evaluateRules(
 const dataExtractionPrompt = ai.definePrompt({
     name: 'dataExtractionPrompt',
     input: { schema: z.object({ prompt: z.string() }) },
-    output: { schema: z.object({ data: z.record(z.any()) }) },
+    output: { schema: z.object({ data: z.record(z.string().or(z.number()).or(z.boolean())) }) },
     prompt: `
       Extract all key-value pairs from the user's prompt. The keys should be in camelCase.
       Make sure to correctly infer the data types (e.g., number, string, boolean).
