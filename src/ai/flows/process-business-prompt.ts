@@ -108,19 +108,18 @@ async function evaluateRules(
   return { matchedRule: null, evaluationLog };
 }
 
-// Data Extraction Prompt
 const dataExtractionPrompt = ai.definePrompt({
-    name: 'dataExtractionPrompt',
-    input: { schema: z.object({ prompt: z.string() }) },
-    output: { schema: z.object({ data: z.record(z.string().or(z.number()).or(z.boolean())) }) },
-    prompt: `
+  name: 'dataExtractionPrompt',
+  input: { schema: z.object({ prompt: z.string() }) },
+  output: { schema: z.object({ data: z.record(z.string().or(z.number()).or(z.boolean())) }) },
+  prompt: `
       Extract all key-value pairs from the user's prompt. The keys should be in camelCase.
       Make sure to correctly infer the data types (e.g., number, string, boolean).
 
       Prompt:
       {{{prompt}}}
 
-      Respond with the JSON object only.
+      Respond with a JSON object where the key is "data" and the value is another JSON object containing the extracted key-value pairs.
     `,
 });
 
