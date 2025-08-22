@@ -12,6 +12,84 @@ import type { Action } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { ExamplePromptsDialog } from './ExamplePromptsDialog';
 
+type ResultDisplayProps = {
+  result: any;
+  onAddAsExample: () => void;
+};
+
+function ResultDisplay({ result, onAddAsExample }: ResultDisplayProps) {
+
+  const renderInferredCategories = () => {
+    if (result.inferredCategories && result.inferredCategories.length > 0) {
+      return (
+        <div className="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 p-4 text-sm text-blue-800">
+          <Info className="h-5 w-5" />
+          <div>
+            <span className="font-semibold">Inferred Categories: </span>
+            {result.inferredCategories.join(', ')}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+  
+  const renderError = () => {
+    if (result.error) {
+       return (
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
+                <AlertTriangle className="h-5 w-5" />
+                <p>{result.error}</p>
+            </div>
+       )
+    }
+    return null
+  }
+
+  const renderMatchedRule = () => {
+    if (result.matchedRule) {
+      return (
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle>Rule Matched: <span className="text-primary">{result.matchedRule.name}</span></CardTitle>
+            <CardDescription>{result.matchedRule.description}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <h4 className="font-semibold mb-2">Recommended Next Actions:</h4>
+            <div className="space-y-3">
+              {result.recommendedActions.map((action: Action, index: number) => (
+                <div key={index} className="p-3 border rounded-lg bg-background">
+                  <span className="text-sm font-medium"><Badge variant="secondary">{action.function}</Badge></span>
+                  <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
+                  <pre className="mt-2 text-xs bg-muted p-2 rounded-md font-mono">
+                    {JSON.stringify(action.parameters, null, 2)}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="mt-6 space-y-4">
+        <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Processing Result</h3>
+            <Button variant="outline" size="sm" onClick={onAddAsExample}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add as Example
+            </Button>
+        </div>
+        {renderInferredCategories()}
+        {renderError()}
+        {renderMatchedRule()}
+    </div>
+  )
+}
+
 export function RuleTester() {
   const [prompt, setPrompt] = React.useState('');
   const [result, setResult] = React.useState<any>(null);
@@ -86,73 +164,6 @@ export function RuleTester() {
   };
 
   const isPending = isProcessing || isGenerating;
-
-  const renderResult = () => {
-    if (!result) return null;
-    
-    const renderInferredCategories = () => {
-        if (result.inferredCategories && result.inferredCategories.length > 0) {
-            return (
-                <div className="mt-4 flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 p-4 text-sm text-blue-800">
-                  <Info className="h-5 w-5" />
-                  <div>
-                    <span className="font-semibold">Inferred Categories: </span>
-                    {result.inferredCategories.join(', ')}
-                  </div>
-                </div>
-            )
-        }
-        return null
-    }
-
-    if (result.error) {
-      return (
-        <>
-            {renderInferredCategories()}
-            <div className="mt-4 flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
-            <AlertTriangle className="h-5 w-5" />
-            <p>{result.error}</p>
-            </div>
-        </>
-      );
-    }
-    
-    if (result.matchedRule) {
-      return (
-        <>
-        {renderInferredCategories()}
-        <Card className="mt-4">
-          <CardHeader className="flex-row items-center justify-between">
-            <div>
-                <CardTitle>Rule Matched: <span className="text-primary">{result.matchedRule.name}</span></CardTitle>
-                <CardDescription>{result.matchedRule.description}</CardDescription>
-            </div>
-             <Button variant="outline" size="sm" onClick={handleAddAsExample}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add as Example
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <h4 className="font-semibold mb-2">Recommended Next Actions:</h4>
-            <div className="space-y-3">
-              {result.recommendedActions.map((action: Action, index: number) => (
-                <div key={index} className="p-3 border rounded-lg bg-background">
-                  <span className="text-sm font-medium"><Badge variant="secondary">{action.function}</Badge></span>
-                  <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
-                  <pre className="mt-2 text-xs bg-muted p-2 rounded-md font-mono">
-                    {JSON.stringify(action.parameters, null, 2)}
-                  </pre>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        </>
-      );
-    }
-
-    return null;
-  };
 
   return (
     <Card>
@@ -246,7 +257,7 @@ export function RuleTester() {
             </div>
           </div>
         </div>
-        {renderResult()}
+        {result && <ResultDisplay result={result} onAddAsExample={handleAddAsExample} />}
       </CardContent>
     </Card>
   );
