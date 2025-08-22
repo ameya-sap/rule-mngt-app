@@ -2,10 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from './firebase';
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { FormRuleSchema, Rule, RuleSchema } from './types';
 import { z } from 'zod';
 import { suggestRuleComponents } from '@/ai/flows/suggest-rule-components';
+import { processBusinessPrompt } from '@/ai/flows/process-business-prompt';
 
 function parseValue(value: any) {
   if (value === null || value === undefined || value === '') return value;
@@ -25,6 +26,20 @@ export async function getRules(): Promise<Rule[]> {
     } as Rule));
   } catch (error) {
     console.error("Error fetching rules: ", error);
+    return [];
+  }
+}
+
+export async function getRulesByCategory(businessCategory: string): Promise<Rule[]> {
+  try {
+    const q = query(collection(db, 'rules'), where('businessCategory', '==', businessCategory));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    } as Rule));
+  } catch (error) {
+    console.error(`Error fetching rules for category ${businessCategory}: `, error);
     return [];
   }
 }
@@ -138,5 +153,19 @@ export async function importRules(jsonString: string) {
     console.error("Error importing rules: ", error);
     const message = error instanceof z.ZodError ? "JSON data does not match the required rule format." : (error as Error).message;
     return { success: false, error: message };
+  }
+}
+
+
+export async function testBusinessRule(prompt: string) {
+  if (!prompt) {
+    return { success: false, error: 'Prompt is required.' };
+  }
+  try {
+    const result = await processBusinessPrompt({ prompt });
+    return { success: true, result };
+  } catch (error) {
+    console.error("Error processing business prompt: ", error);
+    return { success: false, error: 'Failed to process prompt. ' + (error as Error).message };
   }
 }
