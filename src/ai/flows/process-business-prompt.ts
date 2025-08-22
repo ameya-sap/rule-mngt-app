@@ -59,7 +59,8 @@ const dataExtractionPrompt = ai.definePrompt({
       Prompt:
       {{{prompt}}}
 
-      Respond with only a valid JSON object string containing the extracted key-value pairs.
+      Respond with only the raw JSON object. Do not include any formatting, markdown, or explanatory text.
+      Your response must start with { and end with }.
       Example: {"orderId":"INV-78901","customerClass":"Gold","invoiceAmount":1250,"customerNumber":"CUST-45739","invoiceType":"Sale"}
     `,
 });
@@ -155,15 +156,18 @@ const processBusinessPromptFlow = ai.defineFlow(
 
       // Step 3: Extract structured data from prompt
       const extractionResponse = await dataExtractionPrompt({ prompt });
-      const jsonString = extractionResponse.text;
+      const jsonString = extractionResponse.text.trim();
       if(!jsonString) {
         throw new Error('Could not extract any data from the prompt.');
       }
 
       let extractedData: Record<string, any> = {};
       try {
-        extractedData = JSON.parse(jsonString);
+        // A simple regex to remove markdown fences if they exist
+        const cleanedJsonString = jsonString.replace(/```json\n?/, '').replace(/```$/, '');
+        extractedData = JSON.parse(cleanedJsonString);
       } catch (e) {
+        console.error("Failed to parse JSON:", jsonString);
         throw new Error('AI returned invalid JSON for extracted data.');
       }
       
