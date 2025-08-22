@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from './firebase';
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
-import { FormRuleSchema, Rule, RuleSchema } from './types';
+import { ExamplePrompt, ExamplePromptSchema, FormRuleSchema, Rule, RuleSchema } from './types';
 import { z } from 'zod';
 import { suggestRuleComponents } from '@/ai/flows/suggest-rule-components';
 import { processBusinessPrompt } from '@/ai/flows/process-business-prompt';
@@ -185,5 +185,44 @@ export async function generateExamplePrompt() {
   } catch (error) {
     console.error("Error generating example prompt: ", error);
     return { success: false, error: 'Failed to generate example prompt. ' + (error as Error).message };
+  }
+}
+
+// Example Prompts Actions
+export async function getExamplePrompts(): Promise<ExamplePrompt[]> {
+  try {
+    const snapshot = await getDocs(collection(db, 'examplePrompts'));
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      prompt: doc.data().prompt,
+    }));
+  } catch (error) {
+    console.error("Error fetching example prompts: ", error);
+    return [];
+  }
+}
+
+export async function addExamplePrompt(prompt: string) {
+  try {
+    if (!prompt.trim()) {
+      return { success: false, error: "Prompt cannot be empty." };
+    }
+    await addDoc(collection(db, 'examplePrompts'), { prompt });
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding example prompt: ", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+export async function deleteExamplePrompt(id: string) {
+  try {
+    await deleteDoc(doc(db, 'examplePrompts', id));
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting example prompt: ", error);
+    return { success: false, error: (error as Error).message };
   }
 }

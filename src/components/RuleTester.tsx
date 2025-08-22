@@ -5,18 +5,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { generateExamplePrompt, testBusinessRule } from '@/lib/actions';
-import { Loader2, Sparkles, AlertTriangle, Wand2, Info, HelpCircle } from 'lucide-react';
+import { generateExamplePrompt, testBusinessRule, addExamplePrompt } from '@/lib/actions';
+import { Loader2, Sparkles, AlertTriangle, Wand2, Info, HelpCircle, PlusCircle, Library } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Action } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-
-const examplePrompt = `Please process an invoice for an order with the following details:
-orderId: INV-78901
-customerClass: Gold
-invoiceAmount: 1250
-customerNumber: CUST-45739
-invoiceType: Sale`;
+import { ExamplePromptsDialog } from './ExamplePromptsDialog';
 
 export function RuleTester() {
   const [prompt, setPrompt] = React.useState('');
@@ -45,6 +39,7 @@ export function RuleTester() {
           description: 'Prompt processed successfully.',
         });
       } else {
+        setResult(null); // Clear previous results on error
         toast({
           variant: 'destructive',
           title: 'Processing Failed',
@@ -52,10 +47,6 @@ export function RuleTester() {
         });
       }
     });
-  };
-
-  const handleUseExample = () => {
-    setPrompt(examplePrompt);
   };
   
   const handleGenerateExample = () => {
@@ -75,6 +66,23 @@ export function RuleTester() {
             });
         }
     });
+  };
+
+  const handleAddAsExample = async () => {
+    if (!prompt.trim()) return;
+    const result = await addExamplePrompt(prompt);
+     if (result.success) {
+        toast({
+          title: 'Success',
+          description: 'Prompt added to examples.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: result.error,
+        });
+      }
   };
 
   const isPending = isProcessing || isGenerating;
@@ -114,9 +122,15 @@ export function RuleTester() {
         <>
         {renderInferredCategories()}
         <Card className="mt-4">
-          <CardHeader>
-            <CardTitle>Rule Matched: <span className="text-primary">{result.matchedRule.name}</span></CardTitle>
-            <CardDescription>{result.matchedRule.description}</CardDescription>
+          <CardHeader className="flex-row items-center justify-between">
+            <div>
+                <CardTitle>Rule Matched: <span className="text-primary">{result.matchedRule.name}</span></CardTitle>
+                <CardDescription>{result.matchedRule.description}</CardDescription>
+            </div>
+             <Button variant="outline" size="sm" onClick={handleAddAsExample}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add as Example
+            </Button>
           </CardHeader>
           <CardContent>
             <h4 className="font-semibold mb-2">Recommended Next Actions:</h4>
@@ -214,29 +228,21 @@ export function RuleTester() {
             </div>
 
 
-            <div className='flex items-center'>
-            <Button
-                type="button"
-                variant="outline"
-                onClick={handleGenerateExample}
-                disabled={isPending}
-            >
-                {isGenerating ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                    <Wand2 className="mr-2 h-4 w-4" />
-                )}
-                Generate example with AI
-            </Button>
-            <Button
-              type="button"
-              variant="link"
-              onClick={handleUseExample}
-              disabled={isPending}
-              className="text-muted-foreground"
-            >
-              Use an example
-            </Button>
+            <div className='flex items-center gap-2'>
+              <ExamplePromptsDialog onSelectPrompt={(p) => setPrompt(p)} />
+              <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGenerateExample}
+                  disabled={isPending}
+              >
+                  {isGenerating ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                      <Wand2 className="mr-2 h-4 w-4" />
+                  )}
+                  Generate with AI
+              </Button>
             </div>
           </div>
         </div>

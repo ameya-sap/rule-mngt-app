@@ -105,3 +105,11 @@ export const GenerateExamplePromptOutputSchema = z.object({
   prompt: z.string().describe('The generated example user prompt.'),
 });
 export type GenerateExamplePromptOutput = z.infer<typeof GenerateExamplePromptOutputSchema>;
+
+
+// Example Prompts
+export const ExamplePromptSchema = z.object({
+    id: z.string(),
+    prompt: z.string(),
+});
+export type ExamplePrompt = z.infer<typeof ExamplePromptSchema>;
