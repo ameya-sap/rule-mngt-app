@@ -22,18 +22,37 @@ const categoryInferencePrompt = ai.definePrompt({
   input: { schema: z.object({ prompt: z.string() }) },
   output: { schema: z.object({ category: z.string() }) },
   prompt: `
-    Based on the following user prompt, what is the most likely business category?
-    Respond with the category name only. Examples: "Sales & Finance", "Fraud Detection", "Inventory Management".
+    Based on the user prompt below, identify the most relevant business category from the following list:
+    - Sales & Finance
+    - Controlling & Costing
+    - Asset Management
+    - Treasury & Risk Management
+    - Accounts Payable
+    - Accounts Receivable
+    - Logistics & Shipping
+    - Procurement & Sourcing
+    - Inventory & Warehouse Management
+    - Production Planning
+    - Quality Management
+    - Plant Maintenance
+    - Human Capital Management (HCM)
+    - Recruitment & Talent Management
+    - Time Management
+    - Master Data Governance
+    - Project Systems
+    - Customer Service
+
+    If the prompt does not clearly match any of the categories, respond with "Unknown".
+    Respond with only the category name.
 
     Prompt:
     {{{prompt}}}
   `,
 });
 
-// Data Extraction Prompt - Corrected to output a JSON string
+// Data Extraction Prompt
 const dataExtractionPrompt = ai.definePrompt({
   name: 'dataExtractionPrompt',
-  input: { schema: z.object({ prompt: z.string() }) },
   prompt: `
       Extract all key-value pairs from the user's prompt. The keys should be in camelCase.
       Make sure to correctly infer the data types (e.g., number, string, boolean).
@@ -120,8 +139,8 @@ const processBusinessPromptFlow = ai.defineFlow(
       // Step 1: Infer business category
       const categoryResponse = await categoryInferencePrompt({ prompt });
       const inferredCategory = categoryResponse.output!.category;
-      if (!inferredCategory) {
-          throw new Error('Could not infer a business category from the prompt.');
+      if (!inferredCategory || inferredCategory === 'Unknown') {
+          throw new Error('Could not infer a specific business category from the prompt.');
       }
 
       // Step 2: Get rules for that category
@@ -138,7 +157,7 @@ const processBusinessPromptFlow = ai.defineFlow(
 
       // Step 3: Extract structured data from prompt
       const extractionResponse = await dataExtractionPrompt({ prompt });
-      const jsonString = extractionResponse.text.trim();
+      const jsonString = extractionResponse.text?.trim() ?? '';
       if(!jsonString) {
         throw new Error('Could not extract any data from the prompt.');
       }
