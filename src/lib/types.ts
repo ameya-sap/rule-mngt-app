@@ -87,7 +87,7 @@ export const ProcessBusinessPromptInputSchema = z.object({
 export type ProcessBusinessPromptInput = z.infer<typeof ProcessBusinessPromptInputSchema>;
 
 export const ProcessBusinessPromptOutputSchema = z.object({
-  inferredCategory: z.string().describe('The business category inferred from the prompt.'),
+  inferredCategories: z.array(z.string()).describe('The business categories inferred from the prompt.'),
   extractedData: z.record(z.any()).describe('Key-value data extracted from the prompt.'),
   evaluationLog: z.array(z.string()).describe('A log of the rule evaluation process.'),
   matchedRule: RuleSchema.optional().describe('The rule that was matched, if any.'),

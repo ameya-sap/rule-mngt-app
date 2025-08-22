@@ -20,9 +20,11 @@ export async function processBusinessPrompt(input: ProcessBusinessPromptInput): 
 const categoryInferencePrompt = ai.definePrompt({
   name: 'categoryInferencePrompt',
   input: { schema: z.object({ prompt: z.string() }) },
-  output: { schema: z.object({ category: z.string() }) },
+  output: { schema: z.object({ categories: z.array(z.string()) }) },
   prompt: `
-    Based on the user prompt below, identify the most relevant business category from the following list:
+    Based on the user prompt below, identify the top three most relevant business categories from the following list.
+    The categories should be ordered from most relevant to least relevant.
+
     - Sales & Finance
     - Controlling & Costing
     - Asset Management
@@ -42,8 +44,8 @@ const categoryInferencePrompt = ai.definePrompt({
     - Project Systems
     - Customer Service
 
-    If the prompt does not clearly match any of the categories, respond with "Unknown".
-    Respond with only the category name.
+    If the prompt does not clearly match any of the categories, respond with an empty array.
+    Respond with only the category names in the correct JSON format.
 
     Prompt:
     {{{prompt}}}
@@ -136,24 +138,33 @@ const processBusinessPromptFlow = ai.defineFlow(
   },
   async ({ prompt }) => {
     try {
-      // Step 1: Infer business category
+      // Step 1: Infer business categories
       const categoryResponse = await categoryInferencePrompt({ prompt });
-      const inferredCategory = categoryResponse.output!.category;
-      if (!inferredCategory || inferredCategory === 'Unknown') {
-          throw new Error('Could not infer a specific business category from the prompt.');
+      const inferredCategories = categoryResponse.output!.categories;
+      if (!inferredCategories || inferredCategories.length === 0) {
+          throw new Error('Could not infer any specific business categories from the prompt.');
       }
 
-      // Step 2: Get rules for that category
-      const rules = await getRulesByCategory(inferredCategory);
-      if (rules.length === 0) {
+      // Step 2: Get rules for all inferred categories
+      let allRules: Rule[] = [];
+      for (const category of inferredCategories) {
+          const rulesForCategory = await getRulesByCategory(category);
+          allRules.push(...rulesForCategory);
+      }
+      
+      if (allRules.length === 0) {
         return {
-          inferredCategory,
+          inferredCategories,
           extractedData: {},
-          evaluationLog: [`No active rules found for the inferred category: "${inferredCategory}"`],
+          evaluationLog: [`No active rules found for the inferred categories: "${inferredCategories.join(', ')}"`],
           recommendedActions: [],
-          error: `No active rules were found for the inferred business category "${inferredCategory}".`
+          error: `No active rules were found for the inferred business categories "${inferredCategories.join(', ')}".`
         };
       }
+      
+      // Remove duplicate rules if a rule belongs to multiple inferred categories
+      const uniqueRules = Array.from(new Map(allRules.map(rule => [rule.id, rule])).values());
+
 
       // Step 3: Extract structured data from prompt
       const extractionResponse = await dataExtractionPrompt({ prompt });
@@ -177,11 +188,11 @@ const processBusinessPromptFlow = ai.defineFlow(
       }
 
       // Step 4: Evaluate conditions (in code, not AI)
-      const { matchedRule, evaluationLog } = await evaluateRules(extractedData, rules);
+      const { matchedRule, evaluationLog } = await evaluateRules(extractedData, uniqueRules);
 
       if (matchedRule) {
         return {
-          inferredCategory,
+          inferredCategories,
           extractedData,
           evaluationLog,
           matchedRule,
@@ -189,7 +200,7 @@ const processBusinessPromptFlow = ai.defineFlow(
         };
       } else {
         return {
-          inferredCategory,
+          inferredCategories,
           extractedData,
           evaluationLog,
           recommendedActions: [],
@@ -200,7 +211,7 @@ const processBusinessPromptFlow = ai.defineFlow(
       const error = e as Error;
       console.error("Error in processBusinessPromptFlow: ", error);
       return {
-        inferredCategory: 'unknown',
+        inferredCategories: [],
         extractedData: {},
         evaluationLog: [error.message],
         recommendedActions: [],

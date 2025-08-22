@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { generateExamplePrompt, testBusinessRule } from '@/lib/actions';
-import { Loader2, Sparkles, AlertTriangle, Wand2 } from 'lucide-react';
+import { Loader2, Sparkles, AlertTriangle, Wand2, Info } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Action } from '@/lib/types';
 
@@ -80,18 +80,38 @@ export function RuleTester() {
 
   const renderResult = () => {
     if (!result) return null;
+    
+    const renderInferredCategories = () => {
+        if (result.inferredCategories && result.inferredCategories.length > 0) {
+            return (
+                <div className="mt-4 flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 p-4 text-sm text-blue-800">
+                  <Info className="h-5 w-5" />
+                  <div>
+                    <span className="font-semibold">Inferred Categories: </span>
+                    {result.inferredCategories.join(', ')}
+                  </div>
+                </div>
+            )
+        }
+        return null
+    }
 
     if (result.error) {
       return (
-        <div className="mt-4 flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
-          <AlertTriangle className="h-5 w-5" />
-          <p>{result.error}</p>
-        </div>
+        <>
+            {renderInferredCategories()}
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
+            <AlertTriangle className="h-5 w-5" />
+            <p>{result.error}</p>
+            </div>
+        </>
       );
     }
     
     if (result.matchedRule) {
       return (
+        <>
+        {renderInferredCategories()}
         <Card className="mt-4">
           <CardHeader>
             <CardTitle>Rule Matched: <span className="text-primary">{result.matchedRule.name}</span></CardTitle>
@@ -112,6 +132,7 @@ export function RuleTester() {
             </div>
           </CardContent>
         </Card>
+        </>
       );
     }
 
