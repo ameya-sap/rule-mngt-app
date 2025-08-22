@@ -7,6 +7,7 @@ import { FormRuleSchema, Rule, RuleSchema } from './types';
 import { z } from 'zod';
 import { suggestRuleComponents } from '@/ai/flows/suggest-rule-components';
 import { processBusinessPrompt } from '@/ai/flows/process-business-prompt';
+import { generateExamplePrompt as generateExamplePromptFlow } from '@/ai/flows/generate-example-prompt';
 
 function parseValue(value: any) {
   if (value === null || value === undefined || value === '') return value;
@@ -167,5 +168,22 @@ export async function testBusinessRule(prompt: string) {
   } catch (error) {
     console.error("Error processing business prompt: ", error);
     return { success: false, error: 'Failed to process prompt. ' + (error as Error).message };
+  }
+}
+
+export async function generateExamplePrompt() {
+  try {
+    const allRules = await getRules();
+    if (allRules.length === 0) {
+      return { success: false, error: 'No rules found in the database to generate an example from.' };
+    }
+    const randomRule = allRules[Math.floor(Math.random() * allRules.length)];
+    
+    const result = await generateExamplePromptFlow(randomRule);
+    
+    return { success: true, prompt: result.prompt };
+  } catch (error) {
+    console.error("Error generating example prompt: ", error);
+    return { success: false, error: 'Failed to generate example prompt. ' + (error as Error).message };
   }
 }

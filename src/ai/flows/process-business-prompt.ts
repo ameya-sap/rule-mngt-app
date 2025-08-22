@@ -4,30 +4,12 @@
  * @fileOverview An AI agent that processes a business prompt, evaluates it against a set of rules, and returns the triggered actions.
  *
  * - processBusinessPrompt - A function that processes the business prompt.
- * - ProcessBusinessPromptInput - The input type for the processBusinessPrompt function.
- * - ProcessBusinessPromptOutput - The return type for the processBusinessPrompt function.
  */
 
 import { ai } from '@/ai/genkit';
 import { getRulesByCategory } from '@/lib/actions';
-import { Rule, Action } from '@/lib/types';
+import { Rule, Action, ProcessBusinessPromptInput, ProcessBusinessPromptInputSchema, ProcessBusinessPromptOutput, ProcessBusinessPromptOutputSchema } from '@/lib/types';
 import { z } from 'genkit';
-
-// Schemas
-const ProcessBusinessPromptInputSchema = z.object({
-  prompt: z.string().describe('The user-provided business scenario prompt.'),
-});
-export type ProcessBusinessPromptInput = z.infer<typeof ProcessBusinessPromptInputSchema>;
-
-const ProcessBusinessPromptOutputSchema = z.object({
-  inferredCategory: z.string().describe('The business category inferred from the prompt.'),
-  extractedData: z.record(z.any()).describe('Key-value data extracted from the prompt.'),
-  evaluationLog: z.array(z.string()).describe('A log of the rule evaluation process.'),
-  matchedRule: z.custom<Rule>().optional().describe('The rule that was matched, if any.'),
-  recommendedActions: z.array(z.custom<Action>()).describe('The actions to perform based on the matched rule.'),
-  error: z.string().optional().describe('Any error message that occurred during processing.'),
-});
-export type ProcessBusinessPromptOutput = z.infer<typeof ProcessBusinessPromptOutputSchema>;
 
 // Exported wrapper function
 export async function processBusinessPrompt(input: ProcessBusinessPromptInput): Promise<ProcessBusinessPromptOutput> {

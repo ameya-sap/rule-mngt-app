@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { testBusinessRule } from '@/lib/actions';
-import { Loader2, Sparkles, AlertTriangle } from 'lucide-react';
+import { generateExamplePrompt, testBusinessRule } from '@/lib/actions';
+import { Loader2, Sparkles, AlertTriangle, Wand2 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Action } from '@/lib/types';
 
@@ -20,7 +20,8 @@ invoiceType: Sale`;
 export function RuleTester() {
   const [prompt, setPrompt] = React.useState('');
   const [result, setResult] = React.useState<any>(null);
-  const [isPending, startTransition] = React.useTransition();
+  const [isProcessing, startProcessing] = React.useTransition();
+  const [isGenerating, startGenerating] = React.useTransition();
   const { toast } = useToast();
 
   const handleSubmit = () => {
@@ -33,7 +34,7 @@ export function RuleTester() {
       return;
     }
 
-    startTransition(async () => {
+    startProcessing(async () => {
       setResult(null);
       const response = await testBusinessRule(prompt);
       if (response.success) {
@@ -55,6 +56,27 @@ export function RuleTester() {
   const handleUseExample = () => {
     setPrompt(examplePrompt);
   };
+  
+  const handleGenerateExample = () => {
+    startGenerating(async () => {
+        const response = await generateExamplePrompt();
+        if (response.success && response.prompt) {
+            setPrompt(response.prompt);
+            toast({
+                title: 'Success',
+                description: 'Example prompt generated.',
+            });
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Generation Failed',
+                description: response.error,
+            });
+        }
+    });
+  };
+
+  const isPending = isProcessing || isGenerating;
 
   const renderResult = () => {
     if (!result) return null;
@@ -80,7 +102,7 @@ export function RuleTester() {
             <div className="space-y-3">
               {result.recommendedActions.map((action: Action, index: number) => (
                 <div key={index} className="p-3 border rounded-lg bg-background">
-                  <p className="text-sm font-medium"><Badge variant="secondary">{action.function}</Badge></p>
+                  <span className="text-sm font-medium"><Badge variant="secondary">{action.function}</Badge></span>
                   <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
                   <pre className="mt-2 text-xs bg-muted p-2 rounded-md font-mono">
                     {JSON.stringify(action.parameters, null, 2)}
@@ -116,13 +138,13 @@ export function RuleTester() {
             onChange={(e) => setPrompt(e.target.value)}
             disabled={isPending}
           />
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-4">
             <Button
               type="button"
               onClick={handleSubmit}
               disabled={isPending}
             >
-              {isPending ? (
+              {isProcessing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing...
@@ -130,6 +152,20 @@ export function RuleTester() {
               ) : (
                 'Process Prompt'
               )}
+            </Button>
+            <div className='flex items-center'>
+            <Button
+                type="button"
+                variant="outline"
+                onClick={handleGenerateExample}
+                disabled={isPending}
+            >
+                {isGenerating ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <Wand2 className="mr-2 h-4 w-4" />
+                )}
+                Generate example with AI
             </Button>
             <Button
               type="button"
@@ -140,6 +176,7 @@ export function RuleTester() {
             >
               Use an example
             </Button>
+            </div>
           </div>
         </div>
         {renderResult()}
