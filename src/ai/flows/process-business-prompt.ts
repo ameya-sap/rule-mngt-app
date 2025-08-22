@@ -8,8 +8,9 @@
 
 import { ai } from '@/ai/genkit';
 import { getRulesByCategory } from '@/lib/actions';
-import { Rule, Action, ProcessBusinessPromptInput, ProcessBusinessPromptInputSchema, ProcessBusinessPromptOutput, ProcessBusinessPromptOutputSchema } from '@/lib/types';
+import { ProcessBusinessPromptInput, ProcessBusinessPromptInputSchema, ProcessBusinessPromptOutput, ProcessBusinessPromptOutputSchema, Rule } from '@/lib/types';
 import { z } from 'genkit';
+
 
 // Exported wrapper function
 export async function processBusinessPrompt(input: ProcessBusinessPromptInput): Promise<ProcessBusinessPromptOutput> {
@@ -57,7 +58,8 @@ const dataExtractionPrompt = ai.definePrompt({
   name: 'dataExtractionPrompt',
   prompt: `
       Extract all key-value pairs from the user's prompt. The keys should be in camelCase.
-      Make sure to correctly infer the data types (e.g., number, string, boolean).
+      Infer the most likely data type (e.g., number, string, boolean) for each value.
+      For example, if the prompt says "the stock for 'Material 123' is 50", you should extract '{"materialId": "Material 123", "currentStock": 50}'.
 
       Prompt:
       {{{prompt}}}
