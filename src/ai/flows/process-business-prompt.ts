@@ -8,7 +8,7 @@
 
 import { ai } from '@/ai/genkit';
 import { getRulesByCategory } from '@/lib/actions';
-import { ProcessBusinessPromptInput, ProcessBusinessPromptInputSchema, ProcessBusinessPromptOutput, ProcessBusinessPromptOutputSchema, Rule } from '@/lib/types';
+import { ProcessBusinessPromptInput, ProcessBusinessPromptInputSchema, ProcessBusinessPromptOutput, ProcessBusinessPromptOutputSchema, Rule, RuleSchema } from '@/lib/types';
 import { z } from 'genkit';
 
 
@@ -17,7 +17,7 @@ export async function processBusinessPrompt(input: ProcessBusinessPromptInput): 
   return processBusinessPromptFlow(input);
 }
 
-// Category Inference Prompt
+// Step 1: Infer business categories
 const categoryInferencePrompt = ai.definePrompt({
   name: 'categoryInferencePrompt',
   input: { schema: z.object({ prompt: z.string() }) },
@@ -45,7 +45,7 @@ const categoryInferencePrompt = ai.definePrompt({
     - Project Systems
     - Customer Service
 
-    If the prompt does not clearly match any of the categories, respond with an empty array.
+    If the prompt does not clearly match any of the categories, respond with "Unknown" in the array.
     Respond with only the category names in the correct JSON format.
 
     Prompt:
@@ -53,82 +53,110 @@ const categoryInferencePrompt = ai.definePrompt({
   `,
 });
 
-// Data Extraction Prompt
+// Step 2.1: Select the best rule
+const ruleSelectionPrompt = ai.definePrompt({
+  name: 'ruleSelectionPrompt',
+  input: { schema: z.object({
+    prompt: z.string(),
+    rules: z.array(z.object({ id: z.string(), name: z.string(), description: z.string() }))
+  })},
+  output: { schema: z.object({ bestRuleId: z.string() })},
+  prompt: `
+    From the list of business rules provided below, identify the single best rule that should be used to process the user's prompt.
+    Consider the rule's name and description to make your selection.
+    Respond with only the ID of the best matching rule in the required JSON format.
+
+    User Prompt:
+    "{{{prompt}}}"
+
+    Available Rules:
+    {{#each rules}}
+    - ID: {{this.id}}, Name: "{{this.name}}", Description: "{{this.description}}"
+    {{/each}}
+  `,
+});
+
+
+// Step 3: Extract structured data from prompt based on a specific rule's needs
 const dataExtractionPrompt = ai.definePrompt({
   name: 'dataExtractionPrompt',
+  input: { schema: z.object({
+    prompt: z.string(),
+    ruleToExtractFor: RuleSchema,
+  })},
   prompt: `
-      Extract all key-value pairs from the user's prompt. The keys should be in camelCase.
-      Infer the most likely data type (e.g., number, string, boolean) for each value.
-      For example, if the prompt says "the stock for 'Material 123' is 50", you should extract '{"materialId": "Material 123", "currentStock": 50}'.
+      Based on the user's prompt, extract the key-value pairs needed to evaluate the conditions for the provided business rule.
+      It is critical that the keys in your JSON output **exactly match** the 'field' names from the rule's conditions.
 
-      Prompt:
-      {{{prompt}}}
+      User Prompt:
+      "{{{prompt}}}"
+
+      Business Rule to extract data for:
+      - Name: {{{ruleToExtractFor.name}}}
+      - Conditions:
+      {{#each ruleToExtractFor.conditions}}
+      - Field Name: "{{this.field}}", Operator: "{{this.operator}}", Value: "{{this.value}}"
+      {{/each}}
+
+      For example, if the prompt says "the stock for 'Material 123' is 50" and a condition field is "material.currentStock", you must extract '{"material.currentStock": 50}'.
+      The keys in your JSON response must be the field names from the conditions list above.
 
       Respond with only the raw JSON object. Do not include any formatting, markdown, or explanatory text.
       Your response must start with { and end with }.
-      Example: {"orderId":"INV-78901","customerClass":"Gold","invoiceAmount":1250,"customerNumber":"CUST-45739","invoiceType":"Sale"}
     `,
 });
 
 
-// Helper function to evaluate rules against extracted data
-async function evaluateRules(
+// Step 4: Helper function to evaluate rules against extracted data
+async function evaluateRule(
   promptData: Record<string, any>,
-  rules: Rule[]
-): Promise<{ matchedRule: Rule | null; evaluationLog: string[] }> {
+  rule: Rule
+): Promise<{ matched: boolean; log: string[] }> {
   const evaluationLog: string[] = [];
+  
+  evaluationLog.push(`Evaluating rule: "${rule.name}"`);
+  let allConditionsMet = true;
 
-  for (const rule of rules) {
-    if (rule.status !== 'active') {
-      evaluationLog.push(`Skipping inactive rule: "${rule.name}"`);
-      continue;
+  for (const condition of rule.conditions) {
+    const promptValue = promptData[condition.field];
+    const ruleValue = condition.value;
+    let conditionMet = false;
+
+    if (promptValue === undefined) {
+      evaluationLog.push(`- Condition for field "${condition.field}" SKIPPED: Field not found in prompt data.`);
+      allConditionsMet = false;
+      break;
     }
 
-    evaluationLog.push(`Evaluating rule: "${rule.name}"`);
-    let allConditionsMet = true;
-
-    for (const condition of rule.conditions) {
-      const promptValue = promptData[condition.field];
-      const ruleValue = condition.value;
-      let conditionMet = false;
-
-      if (promptValue === undefined) {
-        evaluationLog.push(`- Condition for field "${condition.field}" SKIPPED: Field not found in prompt data.`);
-        allConditionsMet = false;
-        break; 
-      }
-
-      switch (condition.operator) {
-        case '==': conditionMet = promptValue == ruleValue; break;
-        case '!=': conditionMet = promptValue != ruleValue; break;
-        case '>': conditionMet = promptValue > ruleValue; break;
-        case '<': conditionMet = promptValue < ruleValue; break;
-        case '>=': conditionMet = promptValue >= ruleValue; break;
-        case '<=': conditionMet = promptValue <= ruleValue; break;
-        default:
-          evaluationLog.push(`- Unsupported operator "${condition.operator}" for field "${condition.field}"`);
-          conditionMet = false;
-      }
-
-      evaluationLog.push(
-        `- Condition: \`${condition.field} ${condition.operator} ${ruleValue}\` (Prompt Value: ${promptValue}). Result: ${conditionMet ? 'MET' : 'NOT MET'}`
-      );
-
-      if (!conditionMet) {
-        allConditionsMet = false;
-        break;
-      }
+    switch (condition.operator) {
+      case '==': conditionMet = promptValue == ruleValue; break;
+      case '!=': conditionMet = promptValue != ruleValue; break;
+      case '>': conditionMet = promptValue > ruleValue; break;
+      case '<': conditionMet = promptValue < ruleValue; break;
+      case '>=': conditionMet = promptValue >= ruleValue; break;
+      case '<=': conditionMet = promptValue <= ruleValue; break;
+      default:
+        evaluationLog.push(`- Unsupported operator "${condition.operator}" for field "${condition.field}"`);
+        conditionMet = false;
     }
 
-    if (allConditionsMet) {
-      evaluationLog.push(`SUCCESS: All conditions met for rule "${rule.name}".`);
-      return { matchedRule: rule, evaluationLog };
-    } else {
-      evaluationLog.push(`FAILURE: Not all conditions met for rule "${rule.name}".`);
+    evaluationLog.push(
+      `- Condition: \`${condition.field} ${condition.operator} ${ruleValue}\` (Prompt Value: ${promptValue}). Result: ${conditionMet ? 'MET' : 'NOT MET'}`
+    );
+
+    if (!conditionMet) {
+      allConditionsMet = false;
+      break;
     }
   }
 
-  return { matchedRule: null, evaluationLog };
+  if (allConditionsMet) {
+    evaluationLog.push(`SUCCESS: All conditions met for rule "${rule.name}".`);
+  } else {
+    evaluationLog.push(`FAILURE: Not all conditions met for rule "${rule.name}".`);
+  }
+
+  return { matched: allConditionsMet, log: evaluationLog };
 }
 
 // Main Orchestration Flow
@@ -139,45 +167,64 @@ const processBusinessPromptFlow = ai.defineFlow(
     outputSchema: ProcessBusinessPromptOutputSchema,
   },
   async ({ prompt }) => {
+    let evaluationLog: string[] = [];
     try {
       // Step 1: Infer business categories
       const categoryResponse = await categoryInferencePrompt({ prompt });
-      const inferredCategories = categoryResponse.output!.categories;
+      const inferredCategories = categoryResponse.output!.categories.filter(c => c !== 'Unknown');
+      evaluationLog.push(`Step 1: Inferred Categories - ${inferredCategories.length > 0 ? inferredCategories.join(', ') : 'None'}`);
+
       if (!inferredCategories || inferredCategories.length === 0) {
           throw new Error('Could not infer any specific business categories from the prompt.');
       }
 
       // Step 2: Get rules for all inferred categories
-      let allRules: Rule[] = [];
+      let candidateRules: Rule[] = [];
       for (const category of inferredCategories) {
           const rulesForCategory = await getRulesByCategory(category);
-          allRules.push(...rulesForCategory);
+          candidateRules.push(...rulesForCategory);
       }
+      evaluationLog.push(`Step 2: Found ${candidateRules.length} candidate rules for the inferred categories.`);
       
-      if (allRules.length === 0) {
+      const activeRules = candidateRules.filter(rule => rule.status === 'active');
+      if (activeRules.length === 0) {
         return {
           inferredCategories,
           extractedData: {},
-          evaluationLog: [`No active rules found for the inferred categories: "${inferredCategories.join(', ')}"`],
+          evaluationLog,
           recommendedActions: [],
-          error: `No active rules were found for the inferred business categories "${inferredCategories.join(', ')}".`
+          error: `No active rules found for the inferred categories: "${inferredCategories.join(', ')}".`
         };
       }
       
-      // Remove duplicate rules if a rule belongs to multiple inferred categories
-      const uniqueRules = Array.from(new Map(allRules.map(rule => [rule.id, rule])).values());
+      const uniqueRules = Array.from(new Map(activeRules.map(rule => [rule.id, rule])).values());
+
+      // Step 2.1: Identify the one best rule from the subset
+      const ruleSelectionResponse = await ruleSelectionPrompt({
+        prompt,
+        rules: uniqueRules.map(r => ({ id: r.id!, name: r.name, description: r.description }))
+      });
+      const bestRuleId = ruleSelectionResponse.output?.bestRuleId;
+      if (!bestRuleId) {
+        throw new Error("AI could not select a suitable rule to process the prompt.");
+      }
+      const ruleToProcess = uniqueRules.find(r => r.id === bestRuleId);
+      if (!ruleToProcess) {
+        throw new Error(`Internal error: AI selected rule ID "${bestRuleId}" which was not found.`);
+      }
+      evaluationLog.push(`Step 2.1: AI selected rule "${ruleToProcess.name}" as the best match.`);
 
 
-      // Step 3: Extract structured data from prompt
-      const extractionResponse = await dataExtractionPrompt({ prompt });
+      // Step 3: Extract structured data specifically for the chosen rule
+      const extractionResponse = await dataExtractionPrompt({ prompt, ruleToExtractFor: ruleToProcess });
       const jsonString = extractionResponse.text?.trim() ?? '';
       if(!jsonString) {
-        throw new Error('Could not extract any data from the prompt.');
+        throw new Error('Could not extract any data from the prompt for the selected rule.');
       }
+      evaluationLog.push(`Step 3: Extracting data for rule "${ruleToProcess.name}".`);
 
       let extractedData: Record<string, any> = {};
       try {
-        // A simple regex to remove markdown fences if they exist
         const cleanedJsonString = jsonString.replace(/```json\n?/, '').replace(/```$/, '');
         extractedData = JSON.parse(cleanedJsonString);
       } catch (e) {
@@ -188,17 +235,19 @@ const processBusinessPromptFlow = ai.defineFlow(
       if(Object.keys(extractedData).length === 0) {
         throw new Error('Could not extract any key-value pairs from the prompt.');
       }
+      evaluationLog.push(`- Extracted Data: ${JSON.stringify(extractedData)}`);
 
-      // Step 4: Evaluate conditions (in code, not AI)
-      const { matchedRule, evaluationLog } = await evaluateRules(extractedData, uniqueRules);
+      // Step 4: Evaluate conditions for the single chosen rule
+      const { matched, log } = await evaluateRule(extractedData, ruleToProcess);
+      evaluationLog.push(...log);
 
-      if (matchedRule) {
+      if (matched) {
         return {
           inferredCategories,
           extractedData,
           evaluationLog,
-          matchedRule,
-          recommendedActions: matchedRule.actions,
+          matchedRule: ruleToProcess,
+          recommendedActions: ruleToProcess.actions,
         };
       } else {
         return {
@@ -206,16 +255,17 @@ const processBusinessPromptFlow = ai.defineFlow(
           extractedData,
           evaluationLog,
           recommendedActions: [],
-          error: 'No rules were matched based on the provided prompt.',
+          error: `The conditions for the most relevant rule ("${ruleToProcess.name}") were not met based on the provided prompt.`,
         };
       }
     } catch (e) {
       const error = e as Error;
       console.error("Error in processBusinessPromptFlow: ", error);
+      evaluationLog.push(`ERROR: ${error.message}`);
       return {
         inferredCategories: [],
         extractedData: {},
-        evaluationLog: [error.message],
+        evaluationLog,
         recommendedActions: [],
         error: error.message,
       };
