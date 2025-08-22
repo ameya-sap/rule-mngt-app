@@ -48,11 +48,10 @@ const categoryInferencePrompt = ai.definePrompt({
   `,
 });
 
-// Data Extraction Prompt - Corrected Schema
+// Data Extraction Prompt - Corrected to output a JSON string
 const dataExtractionPrompt = ai.definePrompt({
   name: 'dataExtractionPrompt',
   input: { schema: z.object({ prompt: z.string() }) },
-  output: { schema: z.object({ data: z.record(z.string().or(z.number()).or(z.boolean())) }) },
   prompt: `
       Extract all key-value pairs from the user's prompt. The keys should be in camelCase.
       Make sure to correctly infer the data types (e.g., number, string, boolean).
@@ -60,7 +59,8 @@ const dataExtractionPrompt = ai.definePrompt({
       Prompt:
       {{{prompt}}}
 
-      Respond with a JSON object containing the extracted key-value pairs.
+      Respond with only a valid JSON object string containing the extracted key-value pairs.
+      Example: {"orderId":"INV-78901","customerClass":"Gold","invoiceAmount":1250,"customerNumber":"CUST-45739","invoiceType":"Sale"}
     `,
 });
 
@@ -155,9 +155,20 @@ const processBusinessPromptFlow = ai.defineFlow(
 
       // Step 3: Extract structured data from prompt
       const extractionResponse = await dataExtractionPrompt({ prompt });
-      const extractedData = extractionResponse.output!.data;
-      if(!extractedData || Object.keys(extractedData).length === 0) {
+      const jsonString = extractionResponse.text;
+      if(!jsonString) {
         throw new Error('Could not extract any data from the prompt.');
+      }
+
+      let extractedData: Record<string, any> = {};
+      try {
+        extractedData = JSON.parse(jsonString);
+      } catch (e) {
+        throw new Error('AI returned invalid JSON for extracted data.');
+      }
+      
+      if(Object.keys(extractedData).length === 0) {
+        throw new Error('Could not extract any key-value pairs from the prompt.');
       }
 
       // Step 4: Evaluate conditions (in code, not AI)
