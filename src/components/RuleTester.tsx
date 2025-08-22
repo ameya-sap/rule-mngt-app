@@ -6,9 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { generateExamplePrompt, testBusinessRule } from '@/lib/actions';
-import { Loader2, Sparkles, AlertTriangle, Wand2, Info } from 'lucide-react';
+import { Loader2, Sparkles, AlertTriangle, Wand2, Info, HelpCircle } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Action } from '@/lib/types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 const examplePrompt = `Please process an invoice for an order with the following details:
 orderId: INV-78901
@@ -160,20 +161,59 @@ export function RuleTester() {
             disabled={isPending}
           />
           <div className="flex justify-between items-center gap-4">
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isPending}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                'Process Prompt'
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={isPending}
+                            >
+                            {isProcessing ? (
+                                <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Processing...
+                                </>
+                            ) : (
+                                'Process Prompt'
+                            )}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" align="start">
+                            <div className="max-w-sm text-sm p-2">
+                            <h4 className="font-bold mb-2">Our 4-Step Process</h4>
+                            <ol className="list-decimal list-outside space-y-2 pl-4">
+                                <li>
+                                <span className="font-semibold">AI Understanding:</span> We use AI to interpret your prompt, identifying the business category and extracting key data.
+                                </li>
+                                <li>
+                                <span className="font-semibold">Rule Filtering:</span> The system intelligently fetches only the rules relevant to the identified category.
+                                </li>
+                                <li>
+                                <span className="font-semibold">Precise Evaluation:</span> Conditions are checked using exact code logic—not AI—to ensure 100% accuracy.
+                                </li>
+                                <li>
+                                <span className="font-semibold">Clear Actions:</span> If a rule matches, we present its pre-defined next actions for you to take.
+                                </li>
+                            </ol>
+                            </div>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        This button processes your prompt.
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            </div>
+
+
             <div className='flex items-center'>
             <Button
                 type="button"
