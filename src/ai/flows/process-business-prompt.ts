@@ -48,7 +48,24 @@ const categoryInferencePrompt = ai.definePrompt({
   `,
 });
 
-// Data Extraction & Evaluation Function (not a Genkit flow/prompt, just a helper)
+// Data Extraction Prompt - Corrected Schema
+const dataExtractionPrompt = ai.definePrompt({
+  name: 'dataExtractionPrompt',
+  input: { schema: z.object({ prompt: z.string() }) },
+  output: { schema: z.object({ data: z.record(z.string().or(z.number()).or(z.boolean())) }) },
+  prompt: `
+      Extract all key-value pairs from the user's prompt. The keys should be in camelCase.
+      Make sure to correctly infer the data types (e.g., number, string, boolean).
+
+      Prompt:
+      {{{prompt}}}
+
+      Respond with a JSON object containing the extracted key-value pairs.
+    `,
+});
+
+
+// Helper function to evaluate rules against extracted data
 async function evaluateRules(
   promptData: Record<string, any>,
   rules: Rule[]
@@ -108,22 +125,6 @@ async function evaluateRules(
   return { matchedRule: null, evaluationLog };
 }
 
-const dataExtractionPrompt = ai.definePrompt({
-  name: 'dataExtractionPrompt',
-  input: { schema: z.object({ prompt: z.string() }) },
-  output: { schema: z.object({ data: z.record(z.string().or(z.number()).or(z.boolean())) }) },
-  prompt: `
-      Extract all key-value pairs from the user's prompt. The keys should be in camelCase.
-      Make sure to correctly infer the data types (e.g., number, string, boolean).
-
-      Prompt:
-      {{{prompt}}}
-
-      Respond with a JSON object where the key is "data" and the value is another JSON object containing the extracted key-value pairs.
-    `,
-});
-
-
 // Main Orchestration Flow
 const processBusinessPromptFlow = ai.defineFlow(
   {
@@ -159,7 +160,7 @@ const processBusinessPromptFlow = ai.defineFlow(
         throw new Error('Could not extract any data from the prompt.');
       }
 
-      // Step 4: Evaluate conditions
+      // Step 4: Evaluate conditions (in code, not AI)
       const { matchedRule, evaluationLog } = await evaluateRules(extractedData, rules);
 
       if (matchedRule) {
