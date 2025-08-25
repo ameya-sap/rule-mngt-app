@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateExamplePrompt, testBusinessRule, addExamplePrompt } from '@/lib/actions';
 import { Loader2, Sparkles, AlertTriangle, Wand2, Info, HelpCircle, PlusCircle, Library } from 'lucide-react';
 import { Badge } from './ui/badge';
-import type { Action } from '@/lib/types';
+import type { Action, Condition } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { ExamplePromptsDialog } from './ExamplePromptsDialog';
 
@@ -54,18 +54,36 @@ function ResultDisplay({ result, onAddAsExample }: ResultDisplayProps) {
             <CardTitle>Rule Matched: <span className="text-primary">{result.matchedRule.name}</span></CardTitle>
             <CardDescription>{result.matchedRule.description}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <h4 className="font-semibold mb-2">Recommended Next Actions:</h4>
-            <div className="space-y-3">
-              {result.recommendedActions.map((action: Action, index: number) => (
-                <div key={index} className="p-3 border rounded-lg bg-background">
-                  <span className="text-sm font-medium"><Badge variant="secondary">{action.function}</Badge></span>
-                  <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
-                  <pre className="mt-2 text-xs bg-muted p-2 rounded-md font-mono">
-                    {JSON.stringify(action.parameters, null, 2)}
-                  </pre>
+          <CardContent className="space-y-4">
+             <div>
+                <h4 className="font-semibold mb-2">Matched Conditions:</h4>
+                <div className="space-y-2 text-sm border p-3 rounded-lg bg-background">
+                    {result.matchedRule.conditions.map((condition: Condition, index: number) => (
+                    <div key={index} className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="secondary">{condition.field}</Badge>
+                        <span className="font-mono">{condition.operator}</span>
+                        <Badge variant="outline">{String(condition.value)}</Badge>
+                        <span className="text-muted-foreground italic">
+                        (Prompt Value: {String(result.extractedData[condition.field])})
+                        </span>
+                    </div>
+                    ))}
                 </div>
-              ))}
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-2">Recommended Next Actions:</h4>
+              <div className="space-y-3">
+                {result.recommendedActions.map((action: Action, index: number) => (
+                  <div key={index} className="p-3 border rounded-lg bg-background">
+                    <span className="text-sm font-medium"><Badge variant="secondary">{action.function}</Badge></span>
+                    <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
+                    <pre className="mt-2 text-xs bg-muted p-2 rounded-md font-mono">
+                      {JSON.stringify(action.parameters, null, 2)}
+                    </pre>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
