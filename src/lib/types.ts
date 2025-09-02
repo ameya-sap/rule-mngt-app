@@ -50,6 +50,10 @@ export const FormRuleSchema = RuleSchema.extend({
 // AI Flow Schemas
 
 // suggest-rule-components.ts
+const SuggestionActionSchema = ActionSchema.extend({
+  parameters: z.string(), // For the prompt, parameters are a JSON string.
+});
+
 export const SuggestRuleComponentsInputSchema = z.object({
   existingRules: z.array(
     z.object({
@@ -64,8 +68,8 @@ export const SuggestRuleComponentsInputSchema = z.object({
       actions: z.array(z.object({
         type: z.string(),
         function: z.string(),
-        description: z.string(),
-        parameters: z.record(z.any())
+        description: z.string().optional(),
+        parameters: z.string() // It's a string from the pre-formatting in the action
       }))
     })
   ).describe('A list of existing business rules.'),

@@ -126,7 +126,16 @@ export async function getRuleSuggestions(ruleDescription: string) {
   }
   try {
     const existingRules = await getRules();
-    const suggestions = await suggestRuleComponents({ existingRules, ruleDescription });
+    // Pre-format the parameters into a string for the prompt
+    const formattedRules = existingRules.map(rule => ({
+      ...rule,
+      actions: rule.actions.map(action => ({
+        ...action,
+        parameters: JSON.stringify(action.parameters),
+      })),
+    }));
+
+    const suggestions = await suggestRuleComponents({ existingRules: formattedRules, ruleDescription });
     return { success: true, suggestions };
   } catch (error) {
     console.error("Error getting suggestions: ", error);

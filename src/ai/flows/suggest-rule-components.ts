@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
   {{/each}}
   Actions:
   {{#each this.actions}}
-  - Type: {{this.type}}, Function: {{this.function}}, Description: {{this.description}}, Parameters: {{JSONstringify this.parameters}}
+  - Type: {{this.type}}, Function: {{this.function}}, Description: {{this.description}}, Parameters: {{this.parameters}}
   {{/each}}
   {{/each}}
 
