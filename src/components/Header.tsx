@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, PlusCircle } from 'lucide-react';
 import { ImportRulesDialog } from './ImportRulesDialog';
+import { GenerateRuleDialog } from './GenerateRuleDialog';
 
 export function Header() {
   return (
@@ -13,6 +14,7 @@ export function Header() {
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <ImportRulesDialog />
+          <GenerateRuleDialog />
           <Button asChild>
             <Link href="/rules/new">
               <PlusCircle className="mr-2 h-4 w-4" />

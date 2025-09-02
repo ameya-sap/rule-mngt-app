@@ -9,6 +9,7 @@ import { suggestRuleComponents } from '@/ai/flows/suggest-rule-components';
 import { processBusinessPrompt } from '@/ai/flows/process-business-prompt';
 import { generateExamplePrompt as generateExamplePromptFlow } from '@/ai/flows/generate-example-prompt';
 import { explainRule } from '@/ai/flows/explain-rule';
+import { generateRuleFromPrompt as generateRuleFromPromptFlow } from '@/ai/flows/generate-rule-from-prompt';
 
 function parseValue(value: any) {
   if (value === null || value === undefined || value === '') return value;
@@ -247,3 +248,17 @@ export async function getRuleExplanation(rule: Rule) {
     return { success: false, error: 'Failed to get AI explanation. ' + (error as Error).message };
   }
 }
+
+
+export async function generateRuleFromPrompt(prompt: string) {
+    if (!prompt) {
+      return { success: false, error: 'Prompt is required.' };
+    }
+    try {
+      const rule = await generateRuleFromPromptFlow(prompt);
+      return { success: true, rule };
+    } catch (error) {
+      console.error("Error generating rule from prompt: ", error);
+      return { success: false, error: 'Failed to generate rule. ' + (error as Error).message };
+    }
+  }
