@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { generateRuleFromPrompt, saveRule, addExamplePrompt } from '@/lib/actions';
+import { generateRuleFromPrompt, saveRule, addGenerateRuleExamplePrompt, getGenerateRuleExamplePrompts, deleteGenerateRuleExamplePrompt } from '@/lib/actions';
 import { Bot, Loader2, Plus, Library } from 'lucide-react';
 import type { Rule, Condition, Action } from '@/lib/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -157,7 +157,7 @@ export function GenerateRuleDialog() {
   
   const handleAddAsExample = async () => {
     if (!prompt.trim()) return;
-    const result = await addExamplePrompt(prompt);
+    const result = await addGenerateRuleExamplePrompt(prompt);
      if (result.success) {
         toast({
           title: 'Success',
@@ -196,7 +196,13 @@ export function GenerateRuleDialog() {
             disabled={isGenerating || isSaving}
           />
           <div className="flex justify-between items-center">
-            <ExamplePromptsDialog onSelectPrompt={setPrompt} />
+            <ExamplePromptsDialog 
+              onSelectPrompt={setPrompt}
+              getPrompts={getGenerateRuleExamplePrompts}
+              deletePrompt={deleteGenerateRuleExamplePrompt}
+              dialogTitle="Browse Rule Generation Examples"
+              dialogDescription="Select an example business logic description to generate a rule."
+            />
             <Button
               type="button"
               onClick={handleGenerate}

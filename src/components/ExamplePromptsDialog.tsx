@@ -11,16 +11,25 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { deleteExamplePrompt, getExamplePrompts } from '@/lib/actions';
 import { Library, Loader2, Plus, Trash2 } from 'lucide-react';
 import type { ExamplePrompt } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
 
 type ExamplePromptsDialogProps = {
   onSelectPrompt: (prompt: string) => void;
+  getPrompts: () => Promise<ExamplePrompt[]>;
+  deletePrompt: (id: string) => Promise<{ success: boolean; error?: string }>;
+  dialogTitle: string;
+  dialogDescription: string;
 };
 
-export function ExamplePromptsDialog({ onSelectPrompt }: ExamplePromptsDialogProps) {
+export function ExamplePromptsDialog({
+  onSelectPrompt,
+  getPrompts,
+  deletePrompt,
+  dialogTitle,
+  dialogDescription
+}: ExamplePromptsDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [prompts, setPrompts] = React.useState<ExamplePrompt[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -28,7 +37,7 @@ export function ExamplePromptsDialog({ onSelectPrompt }: ExamplePromptsDialogPro
 
   const fetchPrompts = async () => {
     setIsLoading(true);
-    const fetchedPrompts = await getExamplePrompts();
+    const fetchedPrompts = await getPrompts();
     setPrompts(fetchedPrompts);
     setIsLoading(false);
   };
@@ -45,7 +54,7 @@ export function ExamplePromptsDialog({ onSelectPrompt }: ExamplePromptsDialogPro
   };
 
   const handleDelete = async (id: string) => {
-    const result = await deleteExamplePrompt(id);
+    const result = await deletePrompt(id);
     if (result.success) {
       toast({ title: 'Success', description: 'Example prompt deleted.' });
       fetchPrompts(); // Refresh list
@@ -64,9 +73,9 @@ export function ExamplePromptsDialog({ onSelectPrompt }: ExamplePromptsDialogPro
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl h-[70vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Example Prompts</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>
-            Select an example to start testing, or manage your saved prompts.
+            {dialogDescription}
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 min-h-0">
@@ -102,9 +111,3 @@ export function ExamplePromptsDialog({ onSelectPrompt }: ExamplePromptsDialogPro
     </Dialog>
   );
 }
-
-// Add destructive-outline variant to button if it doesn't exist
-// For now, let's create a temporary style in the component or assume it exists.
-// A better approach would be to update the button variants in ui/button.tsx
-// but let's stick to the user's request context for now.
-// I'll add a new variant for the button.

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { generateExamplePrompt, testBusinessRule, addExamplePrompt } from '@/lib/actions';
+import { generateExamplePrompt, testBusinessRule, addExamplePrompt, getExamplePrompts, deleteExamplePrompt } from '@/lib/actions';
 import { Loader2, Sparkles, AlertTriangle, Wand2, Info, HelpCircle, PlusCircle, Library } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Action, Condition } from '@/lib/types';
@@ -258,7 +258,13 @@ export function RuleTester() {
 
 
             <div className='flex items-center gap-2'>
-              <ExamplePromptsDialog onSelectPrompt={(p) => setPrompt(p)} />
+              <ExamplePromptsDialog 
+                onSelectPrompt={setPrompt}
+                getPrompts={getExamplePrompts}
+                deletePrompt={deleteExamplePrompt}
+                dialogTitle="Browse Rule Tester Examples"
+                dialogDescription="Select an example prompt to test your rules."
+              />
               <Button
                   type="button"
                   variant="outline"

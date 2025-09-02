@@ -115,9 +115,17 @@ export const GenerateExamplePromptOutputSchema = z.object({
 export type GenerateExamplePromptOutput = z.infer<typeof GenerateExamplePromptOutputSchema>;
 
 
-// Example Prompts
+// Example Prompts (for Rule Tester)
 export const ExamplePromptSchema = z.object({
     id: z.string(),
     prompt: z.string(),
 });
 export type ExamplePrompt = z.infer<typeof ExamplePromptSchema>;
+
+
+// Example Prompts (for Generate Rule)
+export const GenerateRuleExamplePromptSchema = z.object({
+  id: z.string(),
+  prompt: z.string(),
+});
+export type GenerateRuleExamplePrompt = z.infer<typeof GenerateRuleExamplePromptSchema>;

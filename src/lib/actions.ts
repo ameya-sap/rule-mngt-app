@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from './firebase';
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
-import { ExamplePrompt, ExamplePromptSchema, FormRuleSchema, Rule, RuleSchema } from './types';
+import { ExamplePrompt, FormRuleSchema, GenerateRuleExamplePrompt, Rule, RuleSchema } from './types';
 import { z } from 'zod';
 import { suggestRuleComponents } from '@/ai/flows/suggest-rule-components';
 import { processBusinessPrompt } from '@/ai/flows/process-business-prompt';
@@ -199,7 +199,7 @@ export async function generateExamplePrompt() {
   }
 }
 
-// Example Prompts Actions
+// Example Prompts (for Rule Tester)
 export async function getExamplePrompts(): Promise<ExamplePrompt[]> {
   try {
     const snapshot = await getDocs(collection(db, 'examplePrompts'));
@@ -237,6 +237,45 @@ export async function deleteExamplePrompt(id: string) {
     return { success: false, error: (error as Error).message };
   }
 }
+
+// Generate Rule Example Prompts
+export async function getGenerateRuleExamplePrompts(): Promise<GenerateRuleExamplePrompt[]> {
+    try {
+      const snapshot = await getDocs(collection(db, 'generateRuleExamplePrompts'));
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        prompt: doc.data().prompt,
+      }));
+    } catch (error) {
+      console.error("Error fetching generate rule example prompts: ", error);
+      return [];
+    }
+  }
+  
+  export async function addGenerateRuleExamplePrompt(prompt: string) {
+    try {
+      if (!prompt.trim()) {
+        return { success: false, error: "Prompt cannot be empty." };
+      }
+      await addDoc(collection(db, 'generateRuleExamplePrompts'), { prompt });
+      revalidatePath('/');
+      return { success: true };
+    } catch (error) {
+      console.error("Error adding generate rule example prompt: ", error);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+  
+  export async function deleteGenerateRuleExamplePrompt(id: string) {
+    try {
+      await deleteDoc(doc(db, 'generateRuleExamplePrompts', id));
+      revalidatePath('/');
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting generate rule example prompt: ", error);
+      return { success: false, error: (error as Error).message };
+    }
+  }
 
 
 export async function getRuleExplanation(rule: Rule) {
