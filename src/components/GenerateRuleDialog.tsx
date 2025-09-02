@@ -20,48 +20,66 @@ import type { Rule, Condition, Action } from '@/lib/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function GeneratedRuleDisplay({ rule }: { rule: Rule }) {
   return (
-    <Card className="max-h-[40vh] overflow-y-auto">
-      <CardHeader className="pb-4">
-        <h4 className="font-semibold text-lg text-primary">{rule.name}</h4>
-        <p className="text-sm text-muted-foreground">{rule.description}</p>
-        <Badge variant="outline" className="w-fit">{rule.businessCategory}</Badge>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-            <h5 className="font-semibold mb-2">Conditions</h5>
-            <div className="space-y-2">
-            {rule.conditions.map((condition: Condition, index: number) => (
-                <div key={`cond-${index}`} className="flex items-center gap-2 flex-wrap text-sm border p-2 rounded-md bg-secondary/30">
-                    <Badge variant="secondary">{condition.field}</Badge>
-                    <span className="font-mono">{condition.operator}</span>
-                    <Badge variant="outline">{String(condition.value)}</Badge>
+    <Tabs defaultValue="formatted">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="formatted">Formatted</TabsTrigger>
+        <TabsTrigger value="raw">Raw JSON</TabsTrigger>
+      </TabsList>
+      <TabsContent value="formatted">
+        <Card className="max-h-[40vh] overflow-y-auto">
+          <CardHeader className="pb-4">
+            <h4 className="font-semibold text-lg text-primary">{rule.name}</h4>
+            <p className="text-sm text-muted-foreground">{rule.description}</p>
+            <Badge variant="outline" className="w-fit">{rule.businessCategory}</Badge>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+                <h5 className="font-semibold mb-2">Conditions</h5>
+                <div className="space-y-2">
+                {rule.conditions.map((condition: Condition, index: number) => (
+                    <div key={`cond-${index}`} className="flex items-center gap-2 flex-wrap text-sm border p-2 rounded-md bg-secondary/30">
+                        <Badge variant="secondary">{condition.field}</Badge>
+                        <span className="font-mono">{condition.operator}</span>
+                        <Badge variant="outline">{String(condition.value)}</Badge>
+                    </div>
+                ))}
                 </div>
-            ))}
             </div>
-        </div>
-        <Separator />
-        <div>
-        <h5 className="font-semibold mb-2">Actions</h5>
-            <div className="space-y-3">
-            {rule.actions.map((action: Action, index: number) => (
-                <div key={`act-${index}`} className="p-3 border rounded-lg bg-secondary/30">
-                <div className='flex items-center gap-2'>
-                    <span className="text-sm font-medium"><Badge variant="secondary">{action.function}</Badge></span>
-                    <span className="text-xs font-mono text-muted-foreground">({action.type})</span>
+            <Separator />
+            <div>
+            <h5 className="font-semibold mb-2">Actions</h5>
+                <div className="space-y-3">
+                {rule.actions.map((action: Action, index: number) => (
+                    <div key={`act-${index}`} className="p-3 border rounded-lg bg-secondary/30">
+                    <div className='flex items-center gap-2'>
+                        <span className="text-sm font-medium"><Badge variant="secondary">{action.function}</Badge></span>
+                        <span className="text-xs font-mono text-muted-foreground">({action.type})</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1 mb-2">{action.description}</p>
+                    <pre className="text-xs bg-muted p-2 rounded-md font-mono">
+                        {JSON.stringify(action.parameters, null, 2)}
+                    </pre>
+                    </div>
+                ))}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1 mb-2">{action.description}</p>
-                <pre className="text-xs bg-muted p-2 rounded-md font-mono">
-                    {JSON.stringify(action.parameters, null, 2)}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="raw">
+         <Card className="max-h-[40vh] overflow-y-auto">
+            <CardContent className="p-0">
+                 <pre className="text-xs bg-muted p-4 rounded-md font-mono whitespace-pre-wrap break-all">
+                    {JSON.stringify(rule, null, 2)}
                 </pre>
-                </div>
-            ))}
-            </div>
-        </div>
-      </CardContent>
-    </Card>
+            </CardContent>
+         </Card>
+      </TabsContent>
+    </Tabs>
   )
 }
 
