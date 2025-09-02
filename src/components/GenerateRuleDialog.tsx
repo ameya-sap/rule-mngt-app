@@ -16,12 +16,59 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { generateRuleFromPrompt, saveRule } from '@/lib/actions';
 import { Bot, Loader2, Plus } from 'lucide-react';
-import { Rule } from '@/lib/types';
+import type { Rule, Condition, Action } from '@/lib/types';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+
+function GeneratedRuleDisplay({ rule }: { rule: Rule }) {
+  return (
+    <Card className="max-h-[40vh] overflow-y-auto">
+      <CardHeader className="pb-4">
+        <h4 className="font-semibold text-lg text-primary">{rule.name}</h4>
+        <p className="text-sm text-muted-foreground">{rule.description}</p>
+        <Badge variant="outline" className="w-fit">{rule.businessCategory}</Badge>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+            <h5 className="font-semibold mb-2">Conditions</h5>
+            <div className="space-y-2">
+            {rule.conditions.map((condition: Condition, index: number) => (
+                <div key={`cond-${index}`} className="flex items-center gap-2 flex-wrap text-sm border p-2 rounded-md bg-secondary/30">
+                    <Badge variant="secondary">{condition.field}</Badge>
+                    <span className="font-mono">{condition.operator}</span>
+                    <Badge variant="outline">{String(condition.value)}</Badge>
+                </div>
+            ))}
+            </div>
+        </div>
+        <Separator />
+        <div>
+        <h5 className="font-semibold mb-2">Actions</h5>
+            <div className="space-y-3">
+            {rule.actions.map((action: Action, index: number) => (
+                <div key={`act-${index}`} className="p-3 border rounded-lg bg-secondary/30">
+                <div className='flex items-center gap-2'>
+                    <span className="text-sm font-medium"><Badge variant="secondary">{action.function}</Badge></span>
+                    <span className="text-xs font-mono text-muted-foreground">({action.type})</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1 mb-2">{action.description}</p>
+                <pre className="text-xs bg-muted p-2 rounded-md font-mono">
+                    {JSON.stringify(action.parameters, null, 2)}
+                </pre>
+                </div>
+            ))}
+            </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 export function GenerateRuleDialog() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [prompt, setPrompt] = React.useState('');
-  const [generatedRule, setGeneratedRule] = React.useState<any | null>(null);
+  const [generatedRule, setGeneratedRule] = React.useState<Rule | null>(null);
   const [isGenerating, startGenerating] = React.useTransition();
   const [isSaving, startSaving] = React.useTransition();
   const { toast } = useToast();
@@ -41,7 +88,7 @@ export function GenerateRuleDialog() {
       setGeneratedRule(null);
       const result = await generateRuleFromPrompt(prompt);
       if (result.success && result.rule) {
-        setGeneratedRule(result.rule);
+        setGeneratedRule(result.rule as Rule);
         toast({
           title: 'Rule Generated',
           description: 'Review the generated rule below.',
@@ -97,7 +144,7 @@ export function GenerateRuleDialog() {
           Generate Rule
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Generate Rule with AI</DialogTitle>
           <DialogDescription>
@@ -131,11 +178,7 @@ export function GenerateRuleDialog() {
         {generatedRule && (
           <div className="space-y-4">
             <h4 className="font-semibold">Generated Rule</h4>
-            <div className="rounded-md bg-muted p-4">
-              <pre className="overflow-x-auto text-sm">
-                <code>{JSON.stringify(generatedRule, null, 2)}</code>
-              </pre>
-            </div>
+            <GeneratedRuleDisplay rule={generatedRule} />
           </div>
         )}
         
