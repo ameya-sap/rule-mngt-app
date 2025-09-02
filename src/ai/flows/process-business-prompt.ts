@@ -22,6 +22,11 @@ const categoryInferencePrompt = ai.definePrompt({
   name: 'categoryInferencePrompt',
   input: { schema: z.object({ prompt: z.string() }) },
   output: { schema: z.object({ categories: z.array(z.string()) }) },
+  config: {
+    response: {
+      format: 'json',
+    },
+  },
   prompt: `
     Based on the user prompt below, identify the top three most relevant business categories from the following list.
     The categories should be ordered from most relevant to least relevant.
@@ -61,6 +66,11 @@ const ruleSelectionPrompt = ai.definePrompt({
     rules: z.array(z.object({ id: z.string(), name: z.string(), description: z.string() }))
   })},
   output: { schema: z.object({ bestRuleId: z.string() })},
+  config: {
+    response: {
+      format: 'json',
+    },
+  },
   prompt: `
     From the list of business rules provided below, identify the single best rule that should be used to process the user's prompt.
     Consider the rule's name and description to make your selection.

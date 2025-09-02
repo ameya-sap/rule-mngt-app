@@ -18,6 +18,11 @@ const prompt = ai.definePrompt({
   name: 'suggestRuleComponentsPrompt',
   input: {schema: SuggestRuleComponentsInputSchema},
   output: {schema: SuggestRuleComponentsOutputSchema},
+  config: {
+    response: {
+      format: 'json',
+    },
+  },
   prompt: `You are an AI assistant that helps users define business rules by suggesting conditions and actions.
 
   Based on the following existing rules and the provided rule description, suggest possible conditions and actions for the new rule.
