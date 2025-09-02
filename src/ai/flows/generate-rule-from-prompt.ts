@@ -23,7 +23,6 @@ const promptTemplate = ai.definePrompt({
   name: 'generateRuleFromPrompt',
   input: { schema: z.string() },
   output: { schema: GeneratedRuleSchema },
-  model: 'googleai/gemini-pro',
   prompt: `
     You are an expert business analyst responsible for creating structured business rules from user requests.
     Analyze the following user prompt and convert it into a valid JSON business rule object that conforms to the provided output schema.
@@ -70,10 +69,7 @@ const generateRuleFromPromptFlow = ai.defineFlow(
     outputSchema: GeneratedRuleSchema,
   },
   async (prompt) => {
-    const response = await promptTemplate(prompt);
-    console.log('Gemini RAW response for generateRuleFromPromptFlow:', JSON.stringify(response, null, 2));
-
-    const output = response.output;
+    const {output} = await promptTemplate(prompt);
     if (!output) {
       throw new Error('Failed to generate a rule from the prompt. The AI returned an empty response.');
     }
