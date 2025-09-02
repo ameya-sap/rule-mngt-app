@@ -69,9 +69,12 @@ const generateRuleFromPromptFlow = ai.defineFlow(
     outputSchema: GeneratedRuleSchema,
   },
   async (prompt) => {
-    const { output } = await promptTemplate(prompt);
+    const response = await promptTemplate(prompt);
+    console.log('Gemini RAW response for generateRuleFromPromptFlow:', JSON.stringify(response, null, 2));
+
+    const output = response.output;
     if (!output) {
-      throw new Error('Failed to generate a rule from the prompt.');
+      throw new Error('Failed to generate a rule from the prompt. The AI returned an empty response.');
     }
     // Ensure status is set if the model doesn't provide it
     if (!output.status) {

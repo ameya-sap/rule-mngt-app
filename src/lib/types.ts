@@ -11,7 +11,7 @@ export const ActionSchema = z.object({
   type: z.string().min(1, 'Type is required.'),
   function: z.string().min(1, 'Function is required.'),
   description: z.string().optional(),
-  parameters: z.record(z.any()),
+  parameters: z.record(z.string(), z.any()),
 });
 
 export const RuleSchema = z.object({
