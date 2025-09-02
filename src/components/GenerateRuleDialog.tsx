@@ -14,13 +14,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { generateRuleFromPrompt, saveRule } from '@/lib/actions';
-import { Bot, Loader2, Plus } from 'lucide-react';
+import { generateRuleFromPrompt, saveRule, addExamplePrompt } from '@/lib/actions';
+import { Bot, Loader2, Plus, Library } from 'lucide-react';
 import type { Rule, Condition, Action } from '@/lib/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ExamplePromptsDialog } from './ExamplePromptsDialog';
 
 function GeneratedRuleDisplay({ rule }: { rule: Rule }) {
   return (
@@ -153,6 +154,23 @@ export function GenerateRuleDialog() {
       }
     });
   };
+  
+  const handleAddAsExample = async () => {
+    if (!prompt.trim()) return;
+    const result = await addExamplePrompt(prompt);
+     if (result.success) {
+        toast({
+          title: 'Success',
+          description: 'Prompt added to examples.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: result.error,
+        });
+      }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -177,20 +195,23 @@ export function GenerateRuleDialog() {
             onChange={(e) => setPrompt(e.target.value)}
             disabled={isGenerating || isSaving}
           />
-           <Button
-            type="button"
-            onClick={handleGenerate}
-            disabled={isGenerating || isSaving}
-          >
-            {isGenerating ? (
-                <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                </>
-            ) : (
-                'Generate'
-            )}
-          </Button>
+          <div className="flex justify-between items-center">
+            <ExamplePromptsDialog onSelectPrompt={setPrompt} />
+            <Button
+              type="button"
+              onClick={handleGenerate}
+              disabled={isGenerating || isSaving}
+            >
+              {isGenerating ? (
+                  <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                  </>
+              ) : (
+                  'Generate'
+              )}
+            </Button>
+          </div>
         </div>
 
         {generatedRule && (
@@ -201,6 +222,16 @@ export function GenerateRuleDialog() {
         )}
         
         <DialogFooter>
+         {generatedRule && (
+            <Button
+                variant="secondary"
+                onClick={handleAddAsExample}
+                disabled={isSaving || isGenerating}
+            >
+                <Plus className="mr-2 h-4 w-4" />
+                Add as Example
+            </Button>
+          )}
           <Button
             type="button"
             onClick={handleAddRule}
