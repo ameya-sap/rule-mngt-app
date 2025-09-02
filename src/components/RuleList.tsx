@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DeleteRuleDialog } from './DeleteRuleDialog';
+import { RuleExplanationDialog } from './RuleExplanationDialog';
 
 type RuleListProps = {
   initialRules: Rule[];
@@ -122,7 +123,8 @@ export function RuleList({ initialRules }: RuleListProps) {
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end items-center gap-2">
+                  <div className="flex justify-end items-center gap-1">
+                    <RuleExplanationDialog rule={rule} />
                     <Button asChild variant="ghost" size="icon">
                       <Link href={`/rules/${rule.id}/edit`}>
                         <Edit className="h-4 w-4" />

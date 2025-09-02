@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { suggestRuleComponents } from '@/ai/flows/suggest-rule-components';
 import { processBusinessPrompt } from '@/ai/flows/process-business-prompt';
 import { generateExamplePrompt as generateExamplePromptFlow } from '@/ai/flows/generate-example-prompt';
+import { explainRule } from '@/ai/flows/explain-rule';
 
 function parseValue(value: any) {
   if (value === null || value === undefined || value === '') return value;
@@ -233,5 +234,16 @@ export async function deleteExamplePrompt(id: string) {
   } catch (error) {
     console.error("Error deleting example prompt: ", error);
     return { success: false, error: (error as Error).message };
+  }
+}
+
+
+export async function getRuleExplanation(rule: Rule) {
+  try {
+    const result = await explainRule(rule);
+    return { success: true, explanation: result.explanation };
+  } catch (error) {
+    console.error("Error getting rule explanation: ", error);
+    return { success: false, error: 'Failed to get AI explanation. ' + (error as Error).message };
   }
 }
