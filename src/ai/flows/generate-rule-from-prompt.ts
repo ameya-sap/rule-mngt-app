@@ -23,6 +23,7 @@ const promptTemplate = ai.definePrompt({
   name: 'generateRuleFromPrompt',
   input: { schema: z.string() },
   output: { schema: GeneratedRuleSchema },
+  model: 'googleai/gemini-pro',
   prompt: `
     You are an expert business analyst responsible for creating structured business rules from user requests.
     Analyze the following user prompt and convert it into a valid JSON business rule object that conforms to the provided output schema.
