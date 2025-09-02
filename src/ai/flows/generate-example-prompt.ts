@@ -19,11 +19,6 @@ const prompt = ai.definePrompt({
     name: 'generateExamplePrompt',
     input: {schema: GenerateExamplePromptInputSchema},
     output: {schema: GenerateExamplePromptOutputSchema},
-    config: {
-      response: {
-        format: 'json',
-      },
-    },
     prompt: `
       You are an assistant that creates realistic example data.
       Based on the provided business rule, generate a sample user prompt (as plain text) that would trigger this rule.
