@@ -58,15 +58,7 @@ const explainRuleFlow = ai.defineFlow(
     outputSchema: ExplainRuleOutputSchema,
   },
   async (input) => {
-    // The parameters object needs to be a string for the prompt
-    const formattedInput = {
-        ...input,
-        actions: input.actions.map(action => ({
-            ...action,
-            parameters: JSON.stringify(action.parameters)
-        }))
-    }
-    const {output} = await prompt(formattedInput);
+    const {output} = await prompt(input);
     return output!;
   }
 );
