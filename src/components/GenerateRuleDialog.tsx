@@ -132,9 +132,9 @@ export function GenerateRuleDialog() {
           <div className="space-y-4">
             <h4 className="font-semibold">Generated Rule</h4>
             <div className="rounded-md bg-muted p-4">
-                <pre className="text-sm overflow-x-auto">
-                    <code>{JSON.stringify(generatedRule, null, 2)}</code>
-                </pre>
+              <pre className="overflow-x-auto text-sm">
+                <code>{JSON.stringify(generatedRule, null, 2)}</code>
+              </pre>
             </div>
           </div>
         )}
