@@ -195,7 +195,7 @@ export function GenerateRuleDialog() {
             onChange={(e) => setPrompt(e.target.value)}
             disabled={isGenerating || isSaving}
           />
-          <div className="flex justify-between items-center">
+          <div className="flex justify-end items-center gap-2">
             <ExamplePromptsDialog 
               onSelectPrompt={setPrompt}
               getPrompts={getGenerateRuleExamplePrompts}
