@@ -135,13 +135,21 @@ async function evaluateRule(
       case '<': conditionMet = promptValue < ruleValue; break;
       case '>=': conditionMet = promptValue >= ruleValue; break;
       case '<=': conditionMet = promptValue <= ruleValue; break;
+      case 'in':
+        if (Array.isArray(ruleValue)) {
+          conditionMet = ruleValue.includes(promptValue);
+        } else {
+          evaluationLog.push(`- Operator "in" for field "${condition.field}" requires the rule value to be an array.`);
+          conditionMet = false;
+        }
+        break;
       default:
         evaluationLog.push(`- Unsupported operator "${condition.operator}" for field "${condition.field}"`);
         conditionMet = false;
     }
 
     evaluationLog.push(
-      `- Condition: \`${condition.field} ${condition.operator} ${ruleValue}\` (Prompt Value: ${promptValue}). Result: ${conditionMet ? 'MET' : 'NOT MET'}`
+      `- Condition: \`${condition.field} ${condition.operator} ${JSON.stringify(ruleValue)}\` (Prompt Value: ${promptValue}). Result: ${conditionMet ? 'MET' : 'NOT MET'}`
     );
 
     if (!conditionMet) {
