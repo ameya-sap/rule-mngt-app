@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { RuleSuggestions } from './RuleSuggestions';
 import { useState } from 'react';
+import { FormulaInput } from './FormulaInput';
 
 type RuleFormProps = {
   rule?: Rule;
@@ -195,7 +196,11 @@ export function RuleForm({ rule }: RuleFormProps) {
                       <FormItem>
                         <FormLabel>Value</FormLabel>
                         <FormControl>
-                          <Input placeholder="Gold" {...field} />
+                          <FormulaInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Gold"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

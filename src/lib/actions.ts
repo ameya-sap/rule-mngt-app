@@ -1,8 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from './firebase';
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { db, addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from './db';
 import { ExamplePrompt, FormRuleSchema, GenerateRuleExamplePrompt, Rule, RuleSchema } from './types';
 import { z } from 'zod';
 import { suggestRuleComponents } from '@/ai/flows/suggest-rule-components';

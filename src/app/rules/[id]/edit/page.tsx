@@ -3,12 +3,13 @@ import { RuleForm } from '@/components/RuleForm';
 import { notFound } from 'next/navigation';
 
 type EditRulePageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
-export default async function EditRulePage({ params }: EditRulePageProps) {
+export default async function EditRulePage(props: EditRulePageProps) {
+  const params = await props.params;
   const rule = await getRule(params.id);
 
   if (!rule) {
