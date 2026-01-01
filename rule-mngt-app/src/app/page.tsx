@@ -4,11 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RuleTester } from '@/components/RuleTester';
 import { Separator } from '@/components/ui/separator';
 
+
 export default async function Home() {
   const rules = await getRules();
 
   return (
     <div className="space-y-8">
+
       <RuleTester />
       <Card>
         <CardHeader>

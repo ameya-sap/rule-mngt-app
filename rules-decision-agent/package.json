@@ -1,0 +1,21 @@
+{
+  "name": "rules-decision-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Decision Agent using Google ADK and Rules MCP Server",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@google/adk": "latest",
+    "@modelcontextprotocol/sdk": "latest",
+    "eventsource": "^2.0.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
