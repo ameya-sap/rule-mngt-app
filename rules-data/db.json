@@ -1,0 +1,1629 @@
+{
+  "rules": {
+    "q67ols": {
+      "name": "Vendor Blacklisting for Poor Quality",
+      "businessCategory": "Quality Management",
+      "description": "Flags a vendor for blacklisting after three failed quality inspection lots in a single quarter.",
+      "conditions": [
+        {
+          "field": "vendor.failedInspectionsCount",
+          "operator": ">=",
+          "value": 3
+        },
+        {
+          "field": "reportingPeriod",
+          "operator": "==",
+          "value": "Current Quarter"
+        }
+      ],
+      "actions": [
+        {
+          "type": "procurement",
+          "function": "flag_vendor_for_review",
+          "description": "Places a 'Poor Quality' flag on the vendor master record.",
+          "parameters": {
+            "vendorId": "<vendorId>",
+            "flag": "Blacklist Review"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_email_alert",
+          "description": "Notifies the procurement manager about the vendor review.",
+          "parameters": {
+            "subject": "Vendor <vendorId> Flagged for Poor Quality",
+            "recipient": "<procurementManagerEmail>",
+            "body": "Vendor <vendorId> has had 3 or more failed quality inspections this quarter and requires review."
+          }
+        }
+      ],
+      "status": "inactive"
+    },
+    "w9aqgp": {
+      "name": "Long-Running Database Queries",
+      "businessCategory": "Performance Monitoring",
+      "description": "Flags database queries that are consuming excessive resources and impacting performance.",
+      "conditions": [
+        {
+          "field": "database_query.runtime",
+          "operator": ">",
+          "value": "300 seconds"
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "generate_dashboard_alert",
+          "parameters": {
+            "details": "Long-running query detected.",
+            "query": "<queryDetails>",
+            "user": "<responsibleUser>"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "body": "A database query is running for an excessive duration.",
+            "recipient": "database administrator",
+            "subject": "Long-Running Database Query"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "5nel8": {
+      "name": "Rapid Table Growth Alert",
+      "businessCategory": "System Level Resources",
+      "description": "Notifies the database administrator when a critical table is experiencing an unusual and rapid increase in size.",
+      "conditions": [
+        {
+          "field": "database.table.name",
+          "operator": "in",
+          "value": [
+            "BSAK",
+            "BKPF"
+          ]
+        },
+        {
+          "field": "database.table.growth_rate",
+          "operator": ">",
+          "value": "10%"
+        }
+      ],
+      "actions": [
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "subject": "Rapid Table Growth Alert",
+            "recipient": "database administrator",
+            "body": "Table <tableName> is growing rapidly."
+          }
+        },
+        {
+          "type": "workflow",
+          "function": "trigger_source_check",
+          "parameters": {
+            "table": "<tableName>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "to3pn": {
+      "name": "Critical Batch Job Failure",
+      "businessCategory": "Job and Process Management",
+      "description": "Automatically creates an incident when a business-critical batch job fails.",
+      "conditions": [
+        {
+          "field": "batch_job.status",
+          "operator": "!=",
+          "value": "Success"
+        },
+        {
+          "field": "batch_job.name",
+          "operator": "in",
+          "value": [
+            "Z_CRITICAL_JOB_1",
+            "Z_CRITICAL_JOB_2"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "type": "ticket_creation",
+          "function": "create_buganizer_ticket",
+          "parameters": {
+            "logs": "<jobLogs>",
+            "priority": "High",
+            "details": "Batch job failed."
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "message": "Critical batch job failed.",
+            "recipient": "on-call support team"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "z93f0lh": {
+      "name": "Product Launch Discount",
+      "businessCategory": "Sales & Finance",
+      "description": "Applies a 15% promotional discount on 'New Gadgets' during Q4.",
+      "conditions": [
+        {
+          "field": "productCategory",
+          "operator": "==",
+          "value": "New Gadgets"
+        },
+        {
+          "field": "salesPeriod",
+          "operator": "in",
+          "value": [
+            "Q4"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "type": "pricing",
+          "function": "apply_promotional_discount",
+          "description": "Calculates and applies a 15% discount at the order item level.",
+          "parameters": {
+            "orderId": "<orderId>",
+            "itemNumber": "<itemNumber>",
+            "discountRate": 0.15
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "n63ohf": {
+      "name": "High OData Gateway Error Rate",
+      "businessCategory": "Performance Monitoring",
+      "description": "Generates an alert when the OData error rate exceeds a critical threshold, indicating a potential issue with the SAP Gateway.",
+      "conditions": [
+        {
+          "field": "OData_error_rate",
+          "operator": ">",
+          "value": "5%"
+        }
+      ],
+      "actions": [
+        {
+          "type": "ticket_creation",
+          "function": "create_buganizer_ticket",
+          "parameters": {
+            "priority": "P1",
+            "description": "High OData Gateway error rate detected."
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "message": "High OData Gateway error rate detected.",
+            "recipient": "SAP Basis"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "89rkvs": {
+      "name": "Mass Dump Detection",
+      "businessCategory": "ABAP Dump Analysis (ST22)",
+      "description": "Detects a sudden increase in the number of similar dumps, which could indicate a system-wide issue or recent transport failure.",
+      "conditions": [
+        {
+          "field": "dump.count",
+          "operator": ">",
+          "value": "20"
+        },
+        {
+          "field": "dump.user",
+          "operator": "!=",
+          "value": "Batch"
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "send_critical_alert",
+          "parameters": {
+            "recipient": "SAP Basis team"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "message": "Mass dumps detected. Check for recent transports."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "60h0ek": {
+      "name": "Gold Customer Discount",
+      "businessCategory": "Sales & Finance",
+      "description": "Apply 10% extra discount for Gold customers with invoices over $1000",
+      "conditions": [
+        {
+          "field": "customerClass",
+          "operator": "==",
+          "value": "Gold"
+        },
+        {
+          "field": "invoiceAmount",
+          "operator": ">",
+          "value": 1000
+        }
+      ],
+      "actions": [
+        {
+          "type": "discount",
+          "function": "apply_discount",
+          "description": "Applies a discount to an order in SAP",
+          "parameters": {
+            "amount": 0.1,
+            "orderId": "<orderId>"
+          }
+        },
+        {
+          "type": "logging",
+          "function": "log_event",
+          "description": "Logs the discount application to an audit trail",
+          "parameters": {
+            "eventName": "DiscountApplied",
+            "orderId": "<orderId>",
+            "details": "10% discount applied to Gold customer"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "y4iqbv": {
+      "name": "Outbound IDoc Processing Delay",
+      "businessCategory": "Application Data Sources",
+      "description": "Flags a delay in processing outbound IDocs to an external system, which could indicate an integration issue.",
+      "conditions": [
+        {
+          "field": "idoc.direction",
+          "operator": "==",
+          "value": "Outbound"
+        },
+        {
+          "field": "idoc.status",
+          "operator": "in",
+          "value": [
+            "03",
+            "30",
+            "41"
+          ]
+        },
+        {
+          "field": "idoc.age",
+          "operator": ">",
+          "value": "30 minutes"
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "generate_dashboard_alert",
+          "parameters": {
+            "color": "red"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "message": "Outbound IDoc processing delay detected.",
+            "recipient": "Integration Support"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "n672l": {
+      "name": "Preventative Maintenance Work Order Creation",
+      "businessCategory": "Plant Maintenance",
+      "description": "Creates a new maintenance work order for a specific piece of equipment based on a predefined schedule.",
+      "conditions": [
+        {
+          "field": "equipment.maintenanceSchedule.nextDueDate",
+          "operator": "==",
+          "value": "Today"
+        },
+        {
+          "field": "equipment.status",
+          "operator": "==",
+          "value": "In Service"
+        }
+      ],
+      "actions": [
+        {
+          "type": "maintenance",
+          "function": "create_maintenance_order",
+          "description": "Generates a preventative maintenance work order in SAP PM.",
+          "parameters": {
+            "equipmentId": "<equipmentId>",
+            "orderType": "Preventative",
+            "workCenter": "<responsibleWorkCenter>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "x9lzw": {
+      "name": "Automatic Dunning for Overdue Invoices",
+      "businessCategory": "Accounts Receivable",
+      "description": "Initiates the dunning process for customer invoices that are overdue by more than 30 days.",
+      "conditions": [
+        {
+          "field": "invoice.status",
+          "operator": "==",
+          "value": "Overdue"
+        },
+        {
+          "field": "invoice.daysPastDue",
+          "operator": ">",
+          "value": 30
+        }
+      ],
+      "actions": [
+        {
+          "type": "collections",
+          "function": "create_dunning_proposal",
+          "description": "Creates a dunning proposal for the invoice.",
+          "parameters": {
+            "dunningLevel": 1,
+            "invoiceId": "<invoiceId>"
+          }
+        },
+        {
+          "type": "communication",
+          "function": "send_dunning_email",
+          "description": "Sends an initial dunning email to the customer.",
+          "parameters": {
+            "body": "Your invoice <invoiceId> is 30 days past due. Please remit payment.",
+            "recipient": "<customerContactEmail>",
+            "subject": "Overdue Invoice Reminder"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "8orasr": {
+      "name": "Stuck Update Task Restart",
+      "businessCategory": "Job and Process Management",
+      "description": "Automatically restarts a stuck SAP update task to ensure transaction data is processed.",
+      "conditions": [
+        {
+          "field": "update_task.status",
+          "operator": "==",
+          "value": "Stuck"
+        }
+      ],
+      "actions": [
+        {
+          "type": "auto_healing",
+          "function": "restart_update_task",
+          "parameters": {}
+        },
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "message": "Stuck update task was automatically restarted."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "oznryg": {
+      "name": "Invoice Blocking for Price Discrepancy",
+      "businessCategory": "Accounts Payable",
+      "description": "Automatically blocks a vendor invoice if the price on the invoice exceeds the PO price by more than 5%.",
+      "conditions": [
+        {
+          "field": "invoice.materialPrice",
+          "operator": ">",
+          "value": {
+            "operator": "*",
+            "field": "purchaseOrder.materialPrice",
+            "value": 1.05
+          }
+        }
+      ],
+      "actions": [
+        {
+          "type": "workflow",
+          "function": "block_invoice_payment",
+          "description": "Sets a payment block on the invoice in SAP.",
+          "parameters": {
+            "blockReason": "Price Discrepancy",
+            "invoiceId": "<invoiceId>"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_alert",
+          "description": "Notifies the accounts payable team for manual review.",
+          "parameters": {
+            "message": "Invoice <invoiceId> for vendor <vendorId> is blocked due to a price discrepancy.",
+            "recipient": "apTeam"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "i2h6f": {
+      "name": "Critical Number Range Exhaustion",
+      "businessCategory": "Application Data Sources",
+      "description": "Alerts when a critical number range object is nearing exhaustion, preventing potential business process failures.",
+      "conditions": [
+        {
+          "field": "numberRange.object",
+          "operator": "in",
+          "value": [
+            "RF_BELEG",
+            "RV_BELEG",
+            "DEBIT_NOTE"
+          ]
+        },
+        {
+          "field": "numberRange.current_level",
+          "operator": "<",
+          "value": "90%"
+        }
+      ],
+      "actions": [
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "recipient": "SAP Basis team"
+          }
+        },
+        {
+          "type": "workflow",
+          "function": "create_task",
+          "parameters": {
+            "task_description": "Extend number range in production."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "hy45z": {
+      "name": "New Employee Onboarding Task List",
+      "businessCategory": "Human Capital Management (HCM)",
+      "description": "Generates a new employee onboarding checklist for the hiring manager.",
+      "conditions": [
+        {
+          "field": "employee.hireDate",
+          "operator": "==",
+          "value": "Today"
+        },
+        {
+          "field": "employee.status",
+          "operator": "==",
+          "value": "Hired"
+        }
+      ],
+      "actions": [
+        {
+          "type": "workflow",
+          "function": "create_task_list",
+          "description": "Creates and assigns a standard onboarding task list to the manager.",
+          "parameters": {
+            "template": "Standard Onboarding Checklist",
+            "assignee": "<managerId>",
+            "relatedEmployee": "<employeeId>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "qz4fs": {
+      "name": "Ultra-Purity Hazardous Goods Compliance Check",
+      "businessCategory": "Logistics & Shipping",
+      "description": "Enforces critical compliance steps for high-purity, dangerous goods shipments to high-regulation countries (e.g., Germany, Taiwan, Korea).",
+      "conditions": [
+        {
+          "field": "product.isDangerousGoods",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "field": "product.purityGrade",
+          "operator": "==",
+          "value": "Ultra-Pure"
+        },
+        {
+          "field": "delivery.destinationCountry",
+          "operator": "in",
+          "value": [
+            "DE",
+            "TW",
+            "KR"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "type": "workflow",
+          "function": "set_shipping_block",
+          "description": "The Agent sets a mandatory shipping block on the delivery in SAP using the ABAP Extension.",
+          "parameters": {
+            "deliveryId": "<deliveryId>",
+            "blockReason": "Compliance Hold (DG/UP)"
+          }
+        },
+        {
+          "type": "labeling",
+          "function": "generate_shipping_label",
+          "description": "The Agent calls an external service to generate the specialized dangerous goods label.",
+          "parameters": {
+            "labelTemplate": "DG_UP_CLASS_9",
+            "deliveryId": "<deliveryId>"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_alert_to_compliance_team",
+          "description": "The Agent creates a high-priority alert for human review using the Notification Extension.",
+          "parameters": {
+            "recipient": "TradeCompliance@entegris.com",
+            "message": "High-risk delivery <deliveryId> blocked for final compliance check.",
+            "severity": "High"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "vehfs4h": {
+      "name": "Low-Stock Material Reorder",
+      "businessCategory": "Inventory & Warehouse Management",
+      "description": "Triggers an automatic purchase requisition for materials when stock falls below the safety stock level.",
+      "conditions": [
+        {
+          "field": "material.currentStock",
+          "operator": "<",
+          "value": 101
+        },
+        {
+          "field": "material.isManagedByMRP",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "actions": [
+        {
+          "type": "procurement",
+          "function": "create_purchase_requisition",
+          "description": "Generates a purchase requisition for the required material.",
+          "parameters": {
+            "sourcePlant": "<sourcePlant>",
+            "quantity": "<requiredQuantity>",
+            "materialId": "<materialId>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "1w2ukl": {
+      "name": "High-Value Customer Credit Check",
+      "businessCategory": "Sales & Finance",
+      "description": "Performs an automatic credit check and notifies the sales manager for any order over $50,000 from a 'Platinum' customer.",
+      "conditions": [
+        {
+          "field": "customerClass",
+          "operator": "==",
+          "value": "Platinum"
+        },
+        {
+          "field": "orderAmount",
+          "operator": ">",
+          "value": 50000
+        }
+      ],
+      "actions": [
+        {
+          "type": "finance",
+          "function": "perform_credit_check",
+          "description": "Executes a credit check in SAP Credit Management.",
+          "parameters": {
+            "orderId": "<orderId>",
+            "customerNumber": "<customerNumber>"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_email_alert",
+          "description": "Sends an email to the sales manager for review.",
+          "parameters": {
+            "subject": "High-Value Order for Credit Review",
+            "body": "Order <orderId> from a Platinum customer requires your review due to its high value of $<orderAmount>.",
+            "recipient": "<salesManagerEmail>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "8x9ux3": {
+      "name": "Mandatory Customer Master Data Fields",
+      "businessCategory": "Master Data Governance",
+      "description": "Prevents the creation of a new customer master record if mandatory fields are missing.",
+      "conditions": [
+        {
+          "field": "customerMaster.taxId",
+          "operator": "is_empty",
+          "value": true
+        },
+        {
+          "field": "customerMaster.status",
+          "operator": "==",
+          "value": "Pending Creation"
+        }
+      ],
+      "actions": [
+        {
+          "type": "data",
+          "function": "reject_creation",
+          "description": "Blocks the creation of the customer master record.",
+          "parameters": {
+            "reason": "Missing mandatory Tax ID.",
+            "recordId": "<customerRecordId>"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_alert",
+          "description": "Notifies the data steward for data correction.",
+          "parameters": {
+            "recipient": "<dataStewardId>",
+            "message": "Customer record <customerRecordId> rejected. Please provide a Tax ID."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "84xm9": {
+      "name": "Automatic Leave Request Approval",
+      "businessCategory": "Human Capital Management (HCM)",
+      "description": "Automatically approves leave requests of 3 days or less if the employee has sufficient balance.",
+      "conditions": [
+        {
+          "field": "leaveRequest.type",
+          "operator": "==",
+          "value": "Paid Time Off"
+        },
+        {
+          "field": "leaveRequest.duration",
+          "operator": "<=",
+          "value": 3
+        },
+        {
+          "field": "employee.leaveBalance",
+          "operator": ">=",
+          "value": {
+            "field": "leaveRequest.duration"
+          }
+        }
+      ],
+      "actions": [
+        {
+          "type": "workflow",
+          "function": "approve_leave_request",
+          "description": "Changes the status of the leave request to 'Approved'.",
+          "parameters": {
+            "leaveRequestId": "<leaveRequestId>"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_confirmation_email",
+          "description": "Sends a confirmation email to the employee.",
+          "parameters": {
+            "recipient": "<employeeId>",
+            "subject": "Leave Request Approved",
+            "body": "Your leave request for <leaveRequest.duration> days has been automatically approved."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "01l8wg": {
+      "name": "Dangerous Goods Handling",
+      "businessCategory": "Shipping & Logistics",
+      "description": "Generates and prints a dangerous goods shipping label and creates a Safety Data Sheet (SDS) for outbound deliveries containing dangerous goods.",
+      "conditions": [
+        {
+          "field": "outboundDelivery.item.isDangerousGoods",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "actions": [
+        {
+          "type": "document_generation",
+          "function": "generate_and_print_label",
+          "description": "Generates and prints a dangerous goods shipping label.",
+          "parameters": {
+            "deliveryId": "{{outboundDelivery.id}}",
+            "labelType": "dangerous_goods"
+          }
+        },
+        {
+          "type": "document_creation",
+          "function": "create_sds_document",
+          "description": "Creates a Safety Data Sheet (SDS) for the shipment.",
+          "parameters": {
+            "shipmentId": "{{outboundDelivery.shipmentId}}",
+            "productId": "{{outboundDelivery.item.productId}}"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "6noah": {
+      "name": "Quality Inspection for Finished Goods",
+      "businessCategory": "Production Planning",
+      "description": "Creates a quality inspection lot upon goods receipt of a finished product from a production order.",
+      "conditions": [
+        {
+          "field": "productionOrder.status",
+          "operator": "==",
+          "value": "Completed"
+        },
+        {
+          "field": "material.type",
+          "operator": "==",
+          "value": "Finished Goods"
+        }
+      ],
+      "actions": [
+        {
+          "type": "quality",
+          "function": "create_inspection_lot",
+          "description": "Generates a new quality inspection lot in SAP QM.",
+          "parameters": {
+            "quantity": "<quantity>",
+            "material": "<materialId>",
+            "productionOrder": "<productionOrderId>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "kpiivq": {
+      "name": "Long-Running Batch Job",
+      "businessCategory": "Application Data Sources",
+      "description": "Detects and alerts on batch jobs that are running significantly longer than their usual execution time.",
+      "conditions": [
+        {
+          "field": "batch_job.status",
+          "operator": "==",
+          "value": "Running"
+        },
+        {
+          "field": "batch_job.runtime",
+          "operator": ">",
+          "value": "1.5 * average_runtime"
+        }
+      ],
+      "actions": [
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "subject": "Long-Running Batch Job Alert",
+            "recipient": "<jobOwnerEmail>",
+            "body": "Job <jobName> is running longer than usual."
+          }
+        },
+        {
+          "type": "documentation",
+          "function": "log_event",
+          "parameters": {
+            "details": "Long-running job detected for performance analysis."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "uw1fe5": {
+      "name": "High Volume of Failed IDocs",
+      "businessCategory": "Integration & Data Flow",
+      "description": "Detects and alerts on a large number of IDocs with a status of 'Error'.",
+      "conditions": [
+        {
+          "field": "IDocs.status",
+          "operator": "==",
+          "value": "Error"
+        },
+        {
+          "field": "IDocs.count",
+          "operator": ">",
+          "value": "50"
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "generate_dashboard_alert",
+          "parameters": {
+            "color": "red"
+          }
+        },
+        {
+          "type": "ticket_creation",
+          "function": "create_buganizer_ticket",
+          "parameters": {
+            "details": "High volume of failed IDocs detected.",
+            "idoc_numbers": "<idocNumbers>",
+            "error_messages": "<errorMessages>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "tcfxd": {
+      "name": "High Dialog Work Process Utilization",
+      "businessCategory": "System Level Resources",
+      "description": "Alerts when the percentage of dialog work processes in use exceeds a threshold, which can indicate performance degradation.",
+      "conditions": [
+        {
+          "field": "work_process.dialog_used_percent",
+          "operator": ">",
+          "value": "90%"
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "generate_dashboard_alert",
+          "parameters": {
+            "details": "High dialog work process utilization."
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "message": "High dialog work process utilization detected.",
+            "recipient": "System Performance team"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "83yws": {
+      "name": "Blocked tRFC/qRFC Queue",
+      "businessCategory": "Integration & Data Flow",
+      "description": "Identifies when a tRFC or qRFC queue is blocked, preventing data from being transferred.",
+      "conditions": [
+        {
+          "field": "tRFC_queue.status",
+          "operator": "==",
+          "value": "Blocked"
+        }
+      ],
+      "actions": [
+        {
+          "type": "auto_healing",
+          "function": "unblock_queue",
+          "parameters": {}
+        },
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "recipient": "integration team",
+            "message": "A tRFC/qRFC queue was automatically unblocked."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "qpgjrr": {
+      "name": "Critical Dump Alerting",
+      "businessCategory": "ABAP Dump Analysis (ST22)",
+      "description": "Creates an incident ticket and alerts the support team when a high-priority ABAP dump occurs, such as those related to memory issues or critical program failures.",
+      "conditions": [
+        {
+          "field": "dump.runtime_error",
+          "operator": "in",
+          "value": [
+            "TSV_TNEW_PAGE_ALLOC_FAILED",
+            "SYSTEM_NO_ROLL",
+            "TIME_OUT",
+            "DYNPRO_SEND_IN_BACKGROUND"
+          ]
+        },
+        {
+          "field": "dump.frequency",
+          "operator": ">",
+          "value": "5"
+        }
+      ],
+      "actions": [
+        {
+          "type": "ticket_creation",
+          "function": "create_buganizer_ticket",
+          "parameters": {
+            "call_stack": "<callStack>",
+            "priority": "P2",
+            "details": "ABAP dump detected."
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "recipient": "ABAP Development",
+            "message": "ABAP dump occurred: <dumpName> in program <programName>."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "2twkgb": {
+      "name": "Custom Program Dump Analysis",
+      "businessCategory": "ABAP Dump Analysis (ST22)",
+      "description": "Automatically routes dumps from custom Z-programs to the responsible developer for analysis.",
+      "conditions": [
+        {
+          "field": "dump.program_name",
+          "operator": "==",
+          "value": "Z"
+        },
+        {
+          "field": "dump.status",
+          "operator": "==",
+          "value": "New"
+        }
+      ],
+      "actions": [
+        {
+          "type": "ticket_creation",
+          "function": "create_buganizer_ticket",
+          "parameters": {
+            "component": "1004622",
+            "type": "Task",
+            "details": "ABAP dump detected. <ABAP Dump Details>",
+            "priority": "P2",
+            "call_stack": "<callStack>",
+            "description": "Analyze and resolve the ABAP dump in custom program."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "an54ue": {
+      "name": "Overtime Calculation for Employees",
+      "businessCategory": "Time Management",
+      "description": "Calculates and records overtime hours for an employee's weekly timesheet.",
+      "conditions": [
+        {
+          "field": "timesheet.totalHours",
+          "operator": ">",
+          "value": 40
+        },
+        {
+          "field": "timesheet.status",
+          "operator": "==",
+          "value": "Submitted"
+        }
+      ],
+      "actions": [
+        {
+          "type": "payroll",
+          "function": "calculate_overtime",
+          "description": "Adds overtime hours to the payroll data.",
+          "parameters": {
+            "overtimeHours": {
+              "field": "timesheet.totalHours",
+              "operator": "-",
+              "value": 40
+            },
+            "employeeId": "<employeeId>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "l68pre": {
+      "name": "Spool System Full Alert",
+      "businessCategory": "Application Data Sources",
+      "description": "Warns when the spool system is nearing its capacity, which could prevent users from printing or generating reports.",
+      "conditions": [
+        {
+          "field": "spool.used_space",
+          "operator": ">",
+          "value": "95%"
+        }
+      ],
+      "actions": [
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "recipient": "SAP Basis team"
+          }
+        },
+        {
+          "type": "workflow",
+          "function": "trigger_cleanup_job",
+          "parameters": {}
+        }
+      ],
+      "status": "active"
+    },
+    "jx6pok": {
+      "name": "Strategic Material Margin Breach Review",
+      "businessCategory": "Sales & Finance",
+      "description": "The Agent proactively flags high-value, strategic material orders that breach margin, and enriches the alert with a suggested corrective action.",
+      "conditions": [
+        {
+          "field": "salesOrder.netValue",
+          "operator": ">",
+          "value": 50000
+        },
+        {
+          "field": "salesOrder.grossMarginPercent",
+          "operator": "<",
+          "value": 15
+        },
+        {
+          "field": "product.materialGroup",
+          "operator": "==",
+          "value": "CMP_SLURRY"
+        }
+      ],
+      "actions": [
+        {
+          "type": "analysis",
+          "function": "calculate_max_discount",
+          "description": "The Agent uses the Finance Extension to determine the highest acceptable discount level (as a parameter for the subsequent alert).",
+          "parameters": {
+            "orderId": "<orderId>",
+            "targetMargin": 0.15
+          }
+        },
+        {
+          "type": "flag",
+          "function": "flag_sales_order_for_review",
+          "description": "The Agent sets the order status to 'Blocked for Pricing Review' in SAP.",
+          "parameters": {
+            "reviewBy": "Pricing Director",
+            "orderId": "<orderId>"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_high_priority_alert",
+          "description": "The Agent sends a proactive, enriched alert to the executive with the analytical result from the first action.",
+          "parameters": {
+            "recipient": "PricingDirector@entegris.com",
+            "subject": "CRITICAL Margin Alert: SO <orderId> (Action Suggested)",
+            "body": "Margin breached (10%). Max acceptable discount is: <result_from_calculate_max_discount>."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "1n45q7": {
+      "name": "Automatic Case Escalation for Severity",
+      "businessCategory": "Customer Service",
+      "description": "Escalates a customer service case to a supervisor if the severity is marked as 'Critical'.",
+      "conditions": [
+        {
+          "field": "case.severity",
+          "operator": "==",
+          "value": "Critical"
+        },
+        {
+          "field": "case.status",
+          "operator": "==",
+          "value": "Open"
+        }
+      ],
+      "actions": [
+        {
+          "type": "workflow",
+          "function": "escalate_case",
+          "description": "Changes the case owner to the supervisor and sends a high-priority alert.",
+          "parameters": {
+            "caseId": "<caseId>",
+            "newOwner": "Supervisor"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "qozi6r": {
+      "name": "Critical Security Audit Log Entry",
+      "businessCategory": "System Level Resources",
+      "description": "Alerts on specific, high-risk security events captured in the Security Audit Log (SAL).",
+      "conditions": [
+        {
+          "field": "security_log.event_type",
+          "operator": "in",
+          "value": [
+            "Change of Critical Parameter",
+            "User Creation with SAP_ALL"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "send_critical_alert",
+          "parameters": {
+            "recipient": "security operations center"
+          }
+        },
+        {
+          "type": "ticket_creation",
+          "function": "create_buganizer_ticket",
+          "parameters": {}
+        }
+      ],
+      "status": "active"
+    },
+    "pfxpdr": {
+      "name": "Cost Center Overbudget Alert",
+      "businessCategory": "Controlling & Costing",
+      "description": "Monitors and alerts when a cost center's actual expenses exceed the budget.",
+      "conditions": [
+        {
+          "field": "costCenter.actuals",
+          "operator": ">",
+          "value": {
+            "field": "costCenter.budget",
+            "operator": "*",
+            "value": 1.1
+          }
+        },
+        {
+          "field": "reportingPeriod",
+          "operator": "==",
+          "value": "Monthly"
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "create_sap_alert",
+          "description": "Generates a high-priority alert in the SAP system for finance team review.",
+          "parameters": {
+            "costCenter": "<costCenterId>",
+            "alertType": "Overbudget",
+            "overageAmount": "<overageAmount>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "s4t4ppf": {
+      "name": "Multiple Failed Logon Attempts",
+      "businessCategory": "Security and Compliance",
+      "description": "Detects and alerts on multiple failed logon attempts from a single user or IP address.",
+      "conditions": [
+        {
+          "field": "security_log.event",
+          "operator": "==",
+          "value": "Failed Logon"
+        },
+        {
+          "field": "user.failed_attempts",
+          "operator": ">",
+          "value": "5"
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "send_high_priority_alert",
+          "parameters": {
+            "recipient": "security operations team"
+          }
+        },
+        {
+          "type": "ticket_creation",
+          "function": "create_buganizer_ticket",
+          "parameters": {}
+        }
+      ],
+      "status": "active"
+    },
+    "hin2uu": {
+      "name": "Hazardous Material Shipping Label",
+      "businessCategory": "Logistics & Shipping",
+      "description": "Applies a hazardous material label to the outbound delivery for products flagged as dangerous goods.",
+      "conditions": [
+        {
+          "field": "product.isDangerousGoods",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "field": "deliveryType",
+          "operator": "==",
+          "value": "Outbound Delivery"
+        }
+      ],
+      "actions": [
+        {
+          "type": "labeling",
+          "function": "generate_shipping_label",
+          "description": "Generates and prints a dangerous goods shipping label.",
+          "parameters": {
+            "labelTemplate": "DANGEROUS_GOODS_LABEL",
+            "labelData": {
+              "unNumber": "<product.unNumber>",
+              "class": "<product.hazardousClass>"
+            },
+            "deliveryId": "<deliveryId>"
+          }
+        },
+        {
+          "type": "documentation",
+          "function": "generate_sds_document",
+          "description": "Generates a Safety Data Sheet (SDS) to be included with the shipment.",
+          "parameters": {
+            "documentTemplate": "SDS_DOCUMENT",
+            "deliveryId": "<deliveryId>"
+          }
+        }
+      ],
+      "status": "inactive"
+    },
+    "fk1coe": {
+      "name": "High Volume of Failed Update Tasks",
+      "businessCategory": "Application Data Sources",
+      "description": "Alerts when multiple update tasks fail in a short period, which could cause data inconsistencies.",
+      "conditions": [
+        {
+          "field": "update_task.status",
+          "operator": "==",
+          "value": "Error"
+        },
+        {
+          "field": "update_task.count",
+          "operator": ">",
+          "value": "10"
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "generate_critical_dashboard_alert",
+          "parameters": {}
+        },
+        {
+          "type": "ticket_creation",
+          "function": "create_buganizer_ticket",
+          "parameters": {
+            "team": "SAP Basis",
+            "priority": "P1"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "2m6nb": {
+      "name": "Excessive Enqueue Lock Duration",
+      "businessCategory": "Application Data Sources",
+      "description": "Identifies long-held enqueue locks that are blocking other users or processes.",
+      "conditions": [
+        {
+          "field": "enqueue.lock_duration",
+          "operator": ">",
+          "value": "600 seconds"
+        },
+        {
+          "field": "enqueue.user",
+          "operator": "!=",
+          "value": "Batch"
+        }
+      ],
+      "actions": [
+        {
+          "type": "notification",
+          "function": "send_email",
+          "parameters": {
+            "recipient": "system administrator",
+            "message": "Excessive enqueue lock duration detected."
+          }
+        },
+        {
+          "type": "workflow",
+          "function": "identify_blocking_user",
+          "parameters": {}
+        }
+      ],
+      "status": "active"
+    },
+    "nrov89": {
+      "name": "Expiring Batch Quarantine",
+      "businessCategory": "Inventory & Warehouse Management",
+      "description": "Changes the stock status of a material batch approaching its expiration date to 'Restricted Use'.",
+      "conditions": [
+        {
+          "field": "material.batch.expiryDate",
+          "operator": "<",
+          "value": "T+30 Days"
+        },
+        {
+          "field": "material.batch.currentStatus",
+          "operator": "==",
+          "value": "Unrestricted Use"
+        }
+      ],
+      "actions": [
+        {
+          "type": "inventory",
+          "function": "change_stock_status",
+          "description": "Changes the batch status to restricted use in the warehouse management system.",
+          "parameters": {
+            "materialId": "<materialId>",
+            "batchNumber": "<batchNumber>",
+            "newStatus": "Restricted Use"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_alert",
+          "description": "Alerts the warehouse supervisor about the expiring batch.",
+          "parameters": {
+            "recipient": "warehouseSupervisor",
+            "message": "Batch <batchNumber> of material <materialId> is nearing expiration. Status changed to Restricted Use."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "dbgr3": {
+      "name": "Inactive User Account Deactivation",
+      "businessCategory": "System Level Resources",
+      "description": "Deactivates user accounts that have been inactive for a predefined period to improve security.",
+      "conditions": [
+        {
+          "field": "user.last_logon_date",
+          "operator": ">",
+          "value": "90 days ago"
+        },
+        {
+          "field": "user.status",
+          "operator": "==",
+          "value": "Active"
+        }
+      ],
+      "actions": [
+        {
+          "type": "workflow",
+          "function": "lock_user_account",
+          "parameters": {}
+        },
+        {
+          "type": "documentation",
+          "function": "log_and_notify",
+          "parameters": {
+            "recipient": "<managerId>",
+            "message": "User account deactivated due to inactivity."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "93deea": {
+      "name": "High-Value Travel Expense Approval",
+      "businessCategory": "Controlling & Costing",
+      "description": "Routes high-value travel expense reports for manual approval.",
+      "conditions": [
+        {
+          "field": "expenseCategory",
+          "operator": "==",
+          "value": "Travel"
+        },
+        {
+          "field": "totalAmount",
+          "operator": ">",
+          "value": 2500
+        },
+        {
+          "field": "status",
+          "operator": "==",
+          "value": "Submitted"
+        }
+      ],
+      "actions": [
+        {
+          "type": "workflow",
+          "function": "route_for_approval",
+          "description": "Creates a workflow item for manager approval.",
+          "parameters": {
+            "approver": "<managerId>",
+            "documentId": "<expenseReportId>"
+          }
+        },
+        {
+          "type": "notification",
+          "function": "send_notification",
+          "description": "Notifies the employee of the approval status.",
+          "parameters": {
+            "recipient": "<employeeId>",
+            "message": "Your expense report <expenseReportId> has been submitted for manager approval."
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "y5fvla": {
+      "name": "Unhandled Exception Escalation",
+      "businessCategory": "ABAP Dump Analysis (ST22)",
+      "description": "Escalates a dump to a senior developer if the dump is caused by an unhandled exception in a critical application.",
+      "conditions": [
+        {
+          "field": "dump.runtime_error",
+          "operator": "==",
+          "value": "UNCAUGHT_EXCEPTION"
+        },
+        {
+          "field": "dump.application_component",
+          "operator": "in",
+          "value": [
+            "SD",
+            "MM",
+            "FI"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "generate_high_priority_dashboard_alert",
+          "parameters": {}
+        },
+        {
+          "type": "ticket_creation",
+          "function": "create_buganizer_ticket",
+          "parameters": {
+            "team": "Senior ABAP"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "vw33n": {
+      "name": "Project Budget Approval",
+      "businessCategory": "Project Systems",
+      "description": "Routes a new project for budget approval if the estimated cost is over $1,000,000.",
+      "conditions": [
+        {
+          "field": "project.status",
+          "operator": "==",
+          "value": "Pending"
+        },
+        {
+          "field": "project.estimatedCost",
+          "operator": ">",
+          "value": 1000000
+        }
+      ],
+      "actions": [
+        {
+          "type": "workflow",
+          "function": "route_for_approval",
+          "description": "Initiates a formal project approval workflow.",
+          "parameters": {
+            "approver": "Finance Committee",
+            "documentId": "<projectId>"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "6sp23b": {
+      "name": "Unauthorized ABAP Transport Import",
+      "businessCategory": "Security and Compliance",
+      "description": "Flags and alerts on unauthorized or unexpected ABAP transport imports into a production system.",
+      "conditions": [
+        {
+          "field": "ABAP_transport.status",
+          "operator": "==",
+          "value": "Imported"
+        },
+        {
+          "field": "user.authorization",
+          "operator": "==",
+          "value": "Unauthorized"
+        }
+      ],
+      "actions": [
+        {
+          "type": "alert",
+          "function": "send_critical_alert",
+          "parameters": {
+            "recipient": "transport management team"
+          }
+        },
+        {
+          "type": "documentation",
+          "function": "generate_report",
+          "parameters": {
+            "report_details": "transport and user information"
+          }
+        }
+      ],
+      "status": "active"
+    },
+    "nt1a8": {
+      "name": "Resume Screening for Seniority",
+      "businessCategory": "Recruitment & Talent Management",
+      "description": "Routes a resume to a senior recruiter if it contains keywords indicative of a senior role.",
+      "conditions": [
+        {
+          "field": "resume.text",
+          "operator": "contains",
+          "value": [
+            "Senior Manager",
+            "Director",
+            "Lead Architect"
+          ]
+        },
+        {
+          "field": "jobPosting.level",
+          "operator": "==",
+          "value": "Senior"
+        }
+      ],
+      "actions": [
+        {
+          "type": "workflow",
+          "function": "route_application",
+          "description": "Assigns the application to a senior recruiter's queue.",
+          "parameters": {
+            "recruiterRole": "Senior",
+            "applicationId": "<applicationId>"
+          }
+        }
+      ],
+      "status": "active"
+    }
+  },
+  "examplePrompts": {
+    "fsd1xjk": {
+      "prompt": "Submit a new project proposal. Set the project status to Pending and the estimated cost is $1,250,000."
+    },
+    "7n83o": {
+      "prompt": "A delivery with ID 6789 contains Ultra-Pure dangerous chemicals destined for Taiwan (TW). Describe the required compliance actions."
+    },
+    "ny3fz": {
+      "prompt": "A delivery with ID 6789 contains Ultra-Pure dangerous chemicals destined for Taiwan (TW). Describe the required compliance actions."
+    },
+    "yuwu7k": {
+      "prompt": "Process the goods receipt for Production Order 12345, which has just completed production of 500 units of 'Premium Widget' (Finished Goods). A quality inspection is required for these received items."
+    },
+    "mccx74": {
+      "prompt": "The current stock for 'Material 123' has dropped to 50 units, which is below its safety stock of 100 units. This material is managed by MRP, so please trigger an automatic reorder."
+    },
+    "9bgunr": {
+      "prompt": "Process invoice INV-2023-005 for supplier 'GlobalTech Solutions'. The invoice lists a unit price of $52.50 for item 'GTX-Widgets', but the associated purchase order PO-987 specified a unit price of $50.00 for the same item."
+    },
+    "n0lzc9": {
+      "prompt": "Invoice price is 110, PO Price is 100"
+    }
+  },
+  "generateRuleExamplePrompts": {}
+}
