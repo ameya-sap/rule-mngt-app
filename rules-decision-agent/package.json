@@ -6,16 +6,22 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "start:server": "node dist/server.js"
   },
   "dependencies": {
+    "@a2a-js/sdk": "^0.3.7",
     "@google/adk": "latest",
     "@modelcontextprotocol/sdk": "latest",
     "eventsource": "^2.0.2",
+    "express": "^5.2.1",
+    "uuid": "^13.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.0.0"
   }
 }
